@@ -1,0 +1,28 @@
+# colcon/CMake 构建结果
+/build/
+/install/
+/log/
+/build_*/
+/install_*/
+/log_*/
+
+# 本机编译安装的 Livox SDK2
+/external/
+
+# 运行时生成的地图与点云，保留 maps/README.md
+/maps/*.pcd
+/maps/*.ply
+/maps/*.bag
+/maps/*.db3
+/maps/*.mcap
+/src/FAST_LIO/PCD/*.pcd
+/src/FAST_LIO/Log/*.txt
+/src/FAST_LIO/Log/*.csv
+/src/FAST_LIO/Log/*.png
+/src/FAST_LIO/Log/*.pdf
+
+# 编辑器与 Python 缓存
+/.vscode/
+/.idea/
+**/__pycache__/
+*.py[cod]
