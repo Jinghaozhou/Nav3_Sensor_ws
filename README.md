@@ -6,7 +6,8 @@
 /home/jinghao/Fast_lio_ws
 ├── src
 │   ├── livox_ros_driver2   # MID360 驱动、CustomMsg 和网络配置
-│   └── FAST_LIO           # 激光惯性里程计与建图
+│   ├── FAST_LIO           # 激光惯性里程计与建图
+│   └── mid360_bringup     # 驱动、建图、监控和 RViz 组合启动
 ├── build                  # colcon 构建目录
 ├── install                # 构建后的统一环境
 └── log                    # 构建日志
@@ -91,7 +92,7 @@ sudo rosdep init
 rosdep update --rosdistro humble
 ```
 
-安装两个源码包需要的系统依赖：
+安装工作空间内各源码包需要的系统依赖：
 
 ```bash
 source /opt/ros/humble/setup.bash
@@ -111,11 +112,11 @@ cd /home/jinghao/Fast_lio_ws
 
 CMAKE_BUILD_PARALLEL_LEVEL=4 colcon build \
   --symlink-install \
-  --packages-select livox_ros_driver2 fast_lio \
+  --packages-select livox_ros_driver2 fast_lio mid360_bringup \
   --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
 
-`colcon` 会按照依赖顺序先构建 Livox 消息和驱动，再构建 FAST-LIO。
+`colcon` 会按照依赖顺序构建 Livox 驱动、FAST-LIO 和组合启动包。
 
 构建成功后加载统一环境：
 
@@ -125,16 +126,18 @@ source /home/jinghao/Fast_lio_ws/install/setup.bash
 export LD_LIBRARY_PATH="/home/jinghao/Fast_lio_ws/external/lib:${LD_LIBRARY_PATH:-}"
 ```
 
-检查两个包是否都来自当前工作空间：
+检查三个包是否都来自当前工作空间：
 
 ```bash
 ros2 pkg prefix livox_ros_driver2
 ros2 pkg prefix fast_lio
+ros2 pkg prefix mid360_bringup
 ros2 pkg executables livox_ros_driver2
 ros2 pkg executables fast_lio
+ros2 pkg executables mid360_bringup
 ```
 
-两个包的 prefix 都应位于：
+三个包的 prefix 都应位于：
 
 ```text
 /home/jinghao/Fast_lio_ws/install/
@@ -250,6 +253,8 @@ ros2 topic hz /Laser_map
 ros2 topic echo /Odometry --once
 ```
 
+独立启动时，`src/FAST_LIO/config/mid360.yaml` 的 `publish.map_en` 默认是 `true`。若只需里程计和当前帧点云，可改为 `false`，同时停止历史点云的累计与 `/Laser_map` 发布；此时无需执行该话题的 `ros2 topic hz`，也无法通过 `/map_save` 保存完整累计地图。需要存图时，`publish.map_en` 和 `pcd_save.pcd_save_en` 都必须为 `true`。
+
 主要输出：
 
 | 话题 | 含义 |
@@ -320,14 +325,14 @@ ros2 launch fast_lio mapping.launch.py config_file:=mid360.yaml
 
 ### 构建时找不到 `livox_ros_driver2`
 
-确认两个包都在当前工作空间：
+确认三个包都在当前工作空间：
 
 ```bash
 cd /home/jinghao/Fast_lio_ws
 colcon list
 ```
 
-应同时列出 `livox_ros_driver2` 和 `fast_lio`。构建前不要加载旧的 `/home/jinghao/livox_ws/install/setup.bash`。
+应同时列出 `livox_ros_driver2`、`fast_lio` 和 `mid360_bringup`。构建前只加载 `/opt/ros/humble/setup.bash`。
 
 ### 驱动启动但没有点云
 
@@ -358,3 +363,37 @@ ros2 topic hz /livox/imu
 2. `mid360.yaml` 中时间同步参数是否正确；
 3. LiDAR—IMU 外参是否符合实际安装；
 4. 雷达是否松动或振动过大。
+
+## 11. 统一组合启动包（mid360_bringup）
+
+组合启动包同时运行驱动、FAST-LIO、静态 TF、健康监控、局部地图和 RViz。首次使用前先按第 4 节构建三个包。参数和数据接口见 [mid360_bringup 使用说明](src/mid360_bringup/README.md)。
+
+### 启动建图（终端 1）
+
+接好雷达并在终端 1 执行：
+
+```bash
+cd /home/jinghao/Fast_lio_ws
+sudo nmcli connection up livox-mid360
+ping -c 4 192.168.1.106
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+export LD_LIBRARY_PATH="$PWD/external/lib:${LD_LIBRARY_PATH:-}"
+ros2 launch mid360_bringup mid360_mapping.launch.py
+```
+
+启动后保持雷达静止 5～10 秒，待 IMU 初始化完成再移动。
+
+### 保存地图（终端 2）
+
+保持终端 1 运行，在新的终端 2 执行：
+
+```bash
+cd /home/jinghao/Fast_lio_ws
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+export LD_LIBRARY_PATH="$PWD/external/lib:${LD_LIBRARY_PATH:-}"
+ros2 run mid360_bringup save_map
+```
+
+保存成功后会打印 PCD 文件的绝对路径，再停止终端 1。

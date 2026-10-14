@@ -1,0 +1,64 @@
+/**:
+    ros__parameters:
+        feature_extract_enable: false
+        point_filter_num: 2    # 每2点取1(2026-09-29 发散后减压:1→2,剧烈动作时单帧耗时不破100ms预算;地图密度影响小)
+        max_iteration: 3
+        filter_size_surf: 0.2
+        filter_size_map: 0.1
+        cube_side_length: 1000.0
+        runtime_pos_log_enable: false    # 可打开运行日志用于性能分析
+        map_file_path: ""   # 由组合 launch 设置绝对路径及会话时间戳
+
+        common:
+            # 直接运行 FAST-LIO 时使用的输入话题；组合启动时由下方 topics.lidar/imu 覆盖。
+            lid_topic:  "/livox/lidar"
+            imu_topic:  "/livox/imu"
+            time_sync_en: false
+            time_offset_lidar_to_imu: 0.0
+
+        preprocess:
+            lidar_type: 1                # 1 = Livox CustomMsg
+            scan_line:  4
+            blind: 0.5
+            timestamp_unit: 3
+            scan_rate: 10
+
+        mapping:
+            acc_cov: 0.1
+            gyr_cov: 0.1
+            b_acc_cov: 0.0001
+            b_gyr_cov: 0.0001
+            fov_degree:    360.0
+            det_range:     50.0
+            extrinsic_est_en:  false     # 出厂值固化(2026-09-28 路线A,实扫对比验证通过);若未来发现地图系统性变形,走路线B逐台标定(见 README 4.4)
+            extrinsic_T: [ -0.011, -0.02329, 0.04412 ]
+            extrinsic_R: [ 1., 0., 0.,
+                            0., 1., 0.,
+                            0., 0., 1.]
+
+        publish:
+            path_en: true
+            effect_map_en: false
+            map_en: true               # 是否累计并发布 /Laser_map 点云；关闭后也无法通过 /map_save 存图
+            scan_publish_en:  true
+            dense_publish_en: false
+            scan_bodyframe_pub_en: true
+
+        pcd_save:
+            pcd_save_en: true           # 是否允许 /map_save 存图；还需要 publish.map_en 为 true
+            interval: -1
+
+# 组合启动的数据接口。修改话题名时，驱动、FAST-LIO、监控、局部地图和 RViz 同步使用这里的值。
+mid360_bringup:
+    ros__parameters:
+        topics:
+            lidar: "/lidar_points"              # MID360 原始点云（Livox CustomMsg），供 FAST-LIO 订阅
+            imu: "/imu"                         # MID360 惯性测量数据，供 FAST-LIO 订阅
+            odom: "/fast_lio/odom"              # FAST-LIO 估计的里程计位姿
+            local_cloud: "/fast_lio/local_cloud" # 当前帧配准后的点云（世界坐标系）
+            body_cloud: "/fast_lio/body_cloud"   # 当前帧点云（机体坐标系）
+            effect_cloud: "/fast_lio/effect_cloud" # 有效特征点云；需启用 publish.effect_map_en
+            laser_map: "/Laser_map"              # FAST-LIO 从本次运行开始持续累积的已配准点云（按发布周期采样）
+            path: "/path"                       # FAST-LIO 累积的运动轨迹
+            local_map: "/fast_lio/local_map"    # 局部地图窗口聚合的点云
+            health: "/fast_lio/health"          # 点云、IMU、里程计频率及进程健康状态
