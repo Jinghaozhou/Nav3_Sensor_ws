@@ -76,6 +76,8 @@ ros2 launch mid360_bringup mid360_mapping.launch.py rviz:=false
 
 默认网络配置位于 `config/MID360_config.json`：主机地址为 `192.168.1.5`，雷达地址为 `192.168.1.106`。不同设备可通过 `driver_config` 指定另一份 JSON。主机有线接口须配置为 `192.168.1.5/24`，网线、供电和雷达 IP 须匹配。
 
+组合启动默认只将距雷达 0.5～5 米的点送入 FAST-LIO，用于里程计、当前帧点云和地图。驱动原始话题 `/lidar_points` 不受该过滤影响；范围在 `mid360_robot.yaml` 的 `preprocess.blind` 和 `preprocess.max_range` 中调整。
+
 启动后保持静止 5～10 秒完成 IMU 初始化，再缓慢移动。停止前在另一个终端保存地图：
 
 ```bash
@@ -189,9 +191,9 @@ mid360_bringup:
 | `filter_size_surf` / `filter_size_map` / `cube_side_length` | 0.2 / 0.1 / 1000.0 | 点云与内部地图的体素大小、局部地图立方体边长，单位米 |
 | `common.time_sync_en` / `common.time_offset_lidar_to_imu` | false / 0.0 | 点云与 IMU 的时间同步及时间偏移；无准确标定值时保持默认 |
 | `preprocess.lidar_type` / `scan_line` / `timestamp_unit` / `scan_rate` | 1 / 4 / 3 / 10 | 雷达数据格式、扫描线、逐点时间单位与扫描频率；当前值对应 MID360 数据 |
-| `preprocess.blind` | 0.5 | 剔除雷达近处点云的距离，米 |
+| `preprocess.blind` / `max_range` | 0.5 / 5.0 | FAST-LIO 输入点云距雷达的最小 / 最大距离，米 |
 | `mapping.acc_cov` / `gyr_cov` / `b_acc_cov` / `b_gyr_cov` | 0.1 / 0.1 / 0.0001 / 0.0001 | IMU 测量和偏置的噪声参数 |
-| `mapping.fov_degree` / `det_range` | 360.0 / 50.0 | 视场角与建图处理距离 |
+| `mapping.fov_degree` / `det_range` | 360.0 / 10.0 | 视场角 / 内部地图立方体移动阈值；`det_range` 不是点云最远距离过滤器 |
 | `mapping.extrinsic_est_en` | false | 统一入口要求固定外参 |
 | `mapping.extrinsic_T/R` | 文件内的平移和单位旋转矩阵 | 雷达到 IMU 的外参；算法与静态 TF 共用 |
 | `runtime_pos_log_enable` | false | 运行日志开关 |
@@ -201,6 +203,8 @@ mid360_bringup:
 | `pcd_save.pcd_save_en` | true | 是否允许通过 `/map_save` 存图；还需 `publish.map_en=true` |
 
 只需里程计和当前帧配准点云、无需完整累计地图时，可将 `publish.map_en` 设为 `false` 并重启组合启动；这会同时停止历史点云的累计与发布，`/map_save` 将没有可保存的数据。需要存图时保持 `publish.map_en` 和 `pcd_save.pcd_save_en` 都为 `true`。`pcd_save.interval` 是原代码保留的分段存图字段，当前 `/map_save` 服务不使用它；存图文件名及目录由启动参数 `map_output_dir` 决定。
+
+`preprocess.max_range` 是点云预处理的上限，组合启动设为 `5.0` 米；设为 `0.0` 则不限制最大距离。它在点云进入 FAST-LIO 状态估计和建图前生效，原始驱动话题不会改变。单独启动 FAST-LIO 的 `src/FAST_LIO/config/mid360.yaml` 没有设置这一项，因此保持不限制最大距离。
 
 组合启动会根据 `topics.lidar/imu` 覆盖 YAML 中的 `common.lid_topic/imu_topic`，并设置 `world_frame=odom`、`body_frame=base_link` 和带启动时间的 `map_file_path`，因此组合启动时不要通过修改这几个 YAML 字段调整输入话题、frame 或存图路径。`extrinsic_R` 必须是合法的 3×3 旋转矩阵，启动时校验并转换为四元数；启动文件要求 `extrinsic_est_en=false`，确保建图计算和静态 TF 使用同一组固定外参。
 

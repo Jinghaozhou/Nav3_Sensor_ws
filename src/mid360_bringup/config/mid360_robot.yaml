@@ -20,6 +20,7 @@
             lidar_type: 1                # 1 = Livox CustomMsg
             scan_line:  4
             blind: 0.5
+            max_range: 5.0             # 仅将距雷达 0.5～5 m 的点送入 FAST-LIO 建图
             timestamp_unit: 3
             scan_rate: 10
 
@@ -29,7 +30,7 @@
             b_acc_cov: 0.0001
             b_gyr_cov: 0.0001
             fov_degree:    360.0
-            det_range:     50.0
+            det_range:     10.0          # 内部地图立方体移动阈值；点云最远距离由 preprocess.max_range 控制
             extrinsic_est_en:  false     # 出厂值固化(2026-09-28 路线A,实扫对比验证通过);若未来发现地图系统性变形,走路线B逐台标定(见 README 4.4)
             extrinsic_T: [ -0.011, -0.02329, 0.04412 ]
             extrinsic_R: [ 1., 0., 0.,

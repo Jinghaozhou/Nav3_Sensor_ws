@@ -1,11 +1,13 @@
 #include "preprocess.h"
 
+#include <algorithm>
+#include <cmath>
 #include <pcl/common/common.h>
 
 #define RETURN0 0x00
 #define RETURN0AND1 0x10
 
-Preprocess::Preprocess() : feature_enabled(0), lidar_type(AVIA), blind(0.01), point_filter_num(1)
+Preprocess::Preprocess() : lidar_type(AVIA), point_filter_num(1), blind(0.01), max_range(0.0), feature_enabled(false)
 {
   inf_bound = 10;
   N_SCANS = 6;
@@ -47,6 +49,7 @@ void Preprocess::set(bool feat_en, int lid_type, double bld, int pfilt_num)
 void Preprocess::process(const livox_ros_driver2::msg::CustomMsg::UniquePtr &msg, PointCloudXYZI::Ptr& pcl_out)
 {
   avia_handler(msg);
+  filter_max_range();
   *pcl_out = pl_surf;
 }
 
@@ -89,7 +92,23 @@ void Preprocess::process(const sensor_msgs::msg::PointCloud2::UniquePtr &msg, Po
       default_handler(msg);
       break;
   }
+  filter_max_range();
   *pcl_out = pl_surf;
+}
+
+void Preprocess::filter_max_range()
+{
+  if (max_range <= 0.0)
+    return;
+
+  const double max_range_sq = max_range * max_range;
+  auto &points = pl_surf.points;
+  points.erase(std::remove_if(points.begin(), points.end(), [max_range_sq](const PointType &point) {
+    const double range_sq = double(point.x) * point.x + double(point.y) * point.y + double(point.z) * point.z;
+    return !std::isfinite(range_sq) || range_sq > max_range_sq;
+  }), points.end());
+  pl_surf.width = static_cast<uint32_t>(points.size());
+  pl_surf.height = 1;
 }
 
 void Preprocess::avia_handler(const livox_ros_driver2::msg::CustomMsg::UniquePtr &msg)
