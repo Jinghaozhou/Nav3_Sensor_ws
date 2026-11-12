@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "region": "space_2",
+  "library": "reference_maps/keyframe_libraries/space_2/merged_20261111",
+  "baseline_library": "reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+  "keyframes": 40,
+  "status": "experimental_geometry_checked_independent_field_validation_pending",
+  "note": "原28帧保持不变；合入11月10日平台启动轮space_2有效段12帧。仅影响显式keyframes/hierarchical模式，不替换building5固定15候选。"
+}

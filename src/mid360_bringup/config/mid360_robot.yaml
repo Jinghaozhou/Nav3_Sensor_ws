@@ -6,7 +6,7 @@
         filter_size_surf: 0.2
         filter_size_map: 0.1
         cube_side_length: 1000.0
-        runtime_pos_log_enable: false    # 可打开运行日志用于性能分析
+        runtime_pos_log_enable: true     # 与 wyn 一致，记录 FAST-LIO 逐帧耗时和状态以便定位分析
         map_file_path: ""   # 由组合 launch 设置绝对路径及会话时间戳
 
         common:
@@ -30,7 +30,7 @@
             b_acc_cov: 0.0001
             b_gyr_cov: 0.0001
             fov_degree:    360.0
-            det_range:     10.0          # 内部地图立方体移动阈值；点云最远距离由 preprocess.max_range 控制
+            det_range:     5.0           # 与 wyn 的 5 m 关键帧描述子配置一致；点云最远距离仍由 preprocess.max_range 控制
             extrinsic_est_en:  false     # 出厂值固化(2026-09-28 路线A,实扫对比验证通过);若未来发现地图系统性变形,走路线B逐台标定(见 README 4.4)
             extrinsic_T: [ -0.011, -0.02329, 0.04412 ]
             extrinsic_R: [ 1., 0., 0.,
@@ -66,4 +66,6 @@ mid360_bringup:
             local_map_global: "/fast_lio/local_map_global" # 始终使用长窗口的局部点云
             window_status: "/fast_lio/window_status" # 局部地图窗口状态，JSON 字符串
             localization_status: "/localization/status" # 可选 KISS 定位结果输入，用于切换长/短窗口
+            keyframe_candidates: "/localization/keyframe_candidates" # 可选外部关键帧候选消息，供 KISS 初始化订阅
+            keyframe_status: "/localization/keyframe_status" # 关键帧查询状态，JSON 字符串
             health: "/fast_lio/health"          # 点云、IMU、里程计频率及进程健康状态

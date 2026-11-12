@@ -14,14 +14,28 @@ from launch_ros.actions import Node
 
 TOPIC_KEYS = ('lidar', 'imu', 'odom', 'local_cloud', 'body_cloud',
               'effect_cloud', 'laser_map', 'path', 'local_map', 'health',
-              'gravity', 'local_map_global', 'window_status', 'localization_status')
+              'gravity', 'local_map_global', 'window_status', 'localization_status',
+              'keyframe_candidates', 'keyframe_status')
 NEW_TOPIC_DEFAULTS = {
     'gravity': '/fast_lio/gravity',
     'local_map_global': '/fast_lio/local_map_global',
     'window_status': '/fast_lio/window_status',
     'localization_status': '/localization/status',
+    'keyframe_candidates': '/localization/keyframe_candidates',
+    'keyframe_status': '/localization/keyframe_status',
 }
 ABSOLUTE_TOPIC = re.compile(r'^/[A-Za-z_][A-Za-z0-9_]*(?:/[A-Za-z_][A-Za-z0-9_]*)*$')
+
+
+def default_keyframe_map():
+    share = Path(get_package_share_directory('kiss_matcher_localization'))
+    name = 'building_split_space.pcd'
+    paths = [share/'maps'/name]
+    paths.extend(parent/'src/localization/maps'/name for parent in share.parents)
+    for path in paths:
+        if path.is_file():
+            return str(path)
+    raise FileNotFoundError('KISS building_split_space.pcd is absent from installed and source maps; set keyframe_map')
 
 
 def start(context):
@@ -102,6 +116,26 @@ def start(context):
             window_args.append('--adaptive')
         nodes.append(Node(package='mid360_bringup', executable='local_map_window', parameters=[common], output='screen',
             arguments=window_args))
+    if enabled('keyframe_candidates'):
+        if topics['keyframe_candidates'] != '/localization/keyframe_candidates':
+            raise ValueError('KISS currently subscribes to /localization/keyframe_candidates; keep this topic name')
+        map_file = value('keyframe_map')
+        if not map_file:
+            map_file = default_keyframe_map()
+        map_file = Path(map_file).expanduser().resolve()
+        library = Path(value('keyframe_library')).expanduser().resolve()
+        if not map_file.is_file() or not library.is_dir():
+            raise FileNotFoundError(f'Keyframe map or library missing: {map_file}, {library}')
+        keyframe_args = ['--library',str(library), '--map',str(map_file),
+                         '--sensor-config',str(config),
+                         '--cloud-topic',topics['local_cloud'], '--odom-topic',topics['odom'],
+                         '--gravity-topic',topics['gravity'],
+                         '--candidates-topic',topics['keyframe_candidates'],
+                         '--status-topic',topics['keyframe_status']]
+        if value('keyframe_output_dir'):
+            keyframe_args += ['--output',value('keyframe_output_dir')]
+        nodes.append(Node(package='mid360_bringup', executable='keyframe_retriever',
+                          parameters=[common], output='screen', arguments=keyframe_args))
     if enabled('rviz'):
         rviz_topics = {'odom':'/fast_lio/odom', 'path':'/path',
                        'laser_map':'/Laser_map', 'local_map':'/fast_lio/local_map',
@@ -130,8 +164,14 @@ def generate_launch_description():
         'local_map_voxel':('0.15','Local map voxel size meters'),
         'local_map_rate':('1.0','Local map publication Hz'),
         'adaptive_window':('true','Use KISS localization status to switch windows when available'),
-        'recovery_failures':('3','Consecutive localization failures before using the long window')}
-    boolean = {'driver','use_sim_time','rviz','monitor','local_map','adaptive_window'}
+        'recovery_failures':('3','Consecutive localization failures before using the long window'),
+        'keyframe_candidates':('false','Publish external keyframe candidates for KISS keyframe initialization'),
+        'keyframe_library':(str(share/'reference_maps/keyframe_libraries/space_2/merged_20261111'),
+                            'Keyframe reference-library directory'),
+        'keyframe_map':('','Reference map PCD; empty searches KISS installed and source maps'),
+        'keyframe_output_dir':('','Optional directory for keyframe query CSV')}
+    boolean = {'driver','use_sim_time','rviz','monitor','local_map','adaptive_window',
+               'keyframe_candidates'}
     return LaunchDescription([DeclareLaunchArgument(n,default_value=v,description=d,
         **({'choices':['true','false']} if n in boolean else {})) for n,(v,d) in defaults.items()]
         + [OpaqueFunction(function=start)])

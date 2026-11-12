@@ -368,7 +368,7 @@ ros2 topic hz /livox/imu
 
 ## 11. 统一组合启动包（mid360_bringup）
 
-组合启动包同时运行驱动、FAST-LIO、静态 TF、健康监控、局部地图和 RViz。首次使用前先按第 4 节构建三个包。参数和数据接口见 [mid360_bringup 使用说明](src/mid360_bringup/README.md)。
+组合启动包同时运行驱动、FAST-LIO、静态 TF、健康监控、局部地图和 RViz。它向独立的 KISS 定位工作空间提供里程计、重力和长/短窗口点云；需要时可启用关键帧候选发布者。首次使用前先按第 4 节构建三个包。KISS 环境加载顺序、候选库和数据接口见 [mid360_bringup 使用说明](src/mid360_bringup/README.md)。
 
 ### 启动建图（终端 1）
 

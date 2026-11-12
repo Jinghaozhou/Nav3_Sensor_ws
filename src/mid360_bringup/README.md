@@ -1,6 +1,6 @@
 # mid360_bringup：MID360 统一建图入口
 
-`mid360_bringup` 提供 Livox MID360 的建图入口：一次启动雷达驱动、FAST-LIO、静态 TF、健康监控、滑动窗口局部地图和 RViz，并通过命令保存 PCD 地图。建图使用雷达点云与 IMU 数据，输出里程计、轨迹和点云地图。本包不提供回环优化、全局重定位或导航控制。
+`mid360_bringup` 提供 Livox MID360 的建图入口：一次启动雷达驱动、FAST-LIO、静态 TF、健康监控、滑动窗口局部地图和 RViz，并通过命令保存 PCD 地图。建图使用雷达点云与 IMU 数据，输出里程计、轨迹和点云地图。可选的关键帧候选节点向独立的 KISS 定位模块提供初始化假设；本包不执行全局重定位或导航控制。
 
 适用环境：Ubuntu 22.04、ROS 2 Humble、Livox MID360。所有终端使用系统 Python，先退出 conda 环境。运行前需要同一工作空间中的 `livox_ros_driver2`、`fast_lio` 和 Livox SDK2。
 
@@ -14,11 +14,18 @@ mid360_bringup/
 │   └── mid360_mapping.launch.py 组合启动文件
 ├── config/
 │   ├── MID360_config.json       雷达网络与设备配置
-│   └── mid360_robot.yaml        建图参数与组合启动话题
+│   ├── mid360_robot.yaml        建图参数与组合启动话题
+│   └── keyframe_library.json    当前选用的关键帧库
+├── reference_maps/keyframe_libraries/space_2/merged_20261111/
+│                               与 wyn 一致的 40 帧候选库
 ├── rviz/fastlio_map.rviz        RViz 显示配置
 └── mid360_bringup/
     ├── livox_monitor.py         频率、CPU 和内存监控
     ├── local_map_window.py      长/短窗口局部地图及状态输出
+    ├── keyframe_retriever.py    可选外部关键帧候选发布者
+    ├── keyframe_database.py     关键帧库校验与检索
+    ├── keyframe_geometry.py     位姿和哈希工具
+    ├── scan_context_descriptor.py 关键帧描述子
     └── save_map.py              PCD 存图客户端
 ```
 
@@ -109,6 +116,8 @@ ros2 run mid360_bringup save_map
 | `/fast_lio/local_map_global` | sensor_msgs/msg/PointCloud2 | 默认 1 Hz | `odom`，始终使用 120 秒长窗口 |
 | `/fast_lio/window_status` | std_msgs/msg/String | 默认 1 Hz | JSON：模式、请求与实际窗口时长、帧数、点数及时间戳 |
 | `/localization/status` | kiss_matcher_localization/msg/LocalizationResult | 按定位节点 | 可选输入；`applied` 决定长/短窗口切换 |
+| `/localization/keyframe_candidates` | kiss_matcher_localization/msg/KeyframeCandidates | 关键帧模式约 1 Hz | 可选输出；1 秒短观测及全部参考帧的 `map→odom` 候选 |
+| `/localization/keyframe_status` | std_msgs/msg/String | 关键帧模式约 1 Hz | 可选输出；关键帧查询状态 JSON |
 | `/fast_lio/health` | std_msgs/msg/Float32MultiArray | 1 Hz（墙钟） | 见下面字段定义 |
 | `/map_save` | std_srvs/srv/Trigger | 按需 | 保存当前累计地图；返回成功与实际路径 |
 
@@ -116,7 +125,7 @@ ros2 run mid360_bringup save_map
 
 算法点云和里程计采用默认可靠 QoS；监控输入采用可靠、深度 1000，以免浅队列漏计 IMU；局部地图输入采用 BEST_EFFORT，可订阅可靠发布者；局部地图输出为可靠、深度 1。局部地图是时间窗累计点云，不执行动态物体剔除；输入停止超过 2 秒后不再重发旧窗口。实际窗口可能因帧数、点数限制而短于设置值，可查看 `/fast_lio/window_status` 的 `actual_seconds`、`frames`、`points`。`/Laser_map` 每次发送的都是截至当前的累计点云，运行越久消息越大；关闭累计与发布后，仍有 FAST-LIO 用于位姿估计的内部地图，但不再保留供 `/map_save` 使用的历史累计点云。
 
-开启 `adaptive_window` 时，如果环境中可导入 `kiss_matcher_localization/msg/LocalizationResult`，定位结果 `applied=true` 切换到 30 秒短窗口，连续 3 次 `applied=false` 后恢复 120 秒长窗口。未安装或未 source KISS 消息包时，节点会提示并保持长窗口；无需 KISS 时可设置 `adaptive_window:=false`。该功能只订阅定位状态，不启动定位节点。
+开启 `adaptive_window` 时，如果环境中可导入 `kiss_matcher_localization/msg/LocalizationResult`，定位结果 `applied=true` 切换到 30 秒短窗口，连续 3 次 `applied=false` 后恢复 120 秒长窗口。未安装或未 source KISS 消息包时，节点会提示并保持长窗口；无需 KISS 时可设置 `adaptive_window:=false`。须在启动本包前加载 KISS 环境，运行中才加载不会使已启动节点自动切换。该功能只订阅定位状态，不启动定位节点。
 
 ### TF 和 frame 定义
 
@@ -138,7 +147,7 @@ odom
 
 ## 5. 配置文件与启动参数
 
-`config/` 中的两份文件分别交给不同组件使用：`mid360_robot.yaml` 提供 FAST-LIO 建图参数和组合启动的话题名；`MID360_config.json` 提供 Livox 驱动连接雷达所需的网络与设备参数。组合启动默认读取本包安装目录中的这两份文件，可分别用 `config_file` 和 `driver_config` 指向自定义副本。`src/FAST_LIO/config/mid360.yaml` 是单独启动 FAST-LIO 时的默认配置，修改它不会改变组合启动读取的 YAML。
+`config/` 中，`mid360_robot.yaml` 提供 FAST-LIO 建图参数和组合启动的话题名；`MID360_config.json` 提供 Livox 驱动连接雷达所需的网络与设备参数；`keyframe_library.json` 指定默认的关键帧候选库。组合启动默认读取本包安装目录中的前两份文件，可分别用 `config_file` 和 `driver_config` 指向自定义副本。`src/FAST_LIO/config/mid360.yaml` 是单独启动 FAST-LIO 时的默认配置，修改它不会改变组合启动读取的 YAML。
 
 ### 启动参数
 
@@ -165,6 +174,10 @@ ros2 launch mid360_bringup mid360_mapping.launch.py --show-args
 | `local_map_rate` | 1.0 | 局部地图发布 Hz |
 | `adaptive_window` | true | 有 KISS 定位消息时按定位状态切换长/短窗口 |
 | `recovery_failures` | 3 | 连续定位失败多少次后恢复长窗口 |
+| `keyframe_candidates` | false | 启动外部关键帧候选发布者；需先加载 KISS 消息包 |
+| `keyframe_library` | 包内 40 帧关键帧库 | 候选库目录，可指定另一套经过校验的库 |
+| `keyframe_map` | KISS 的 `building_split_space.pcd` | 用于核对库版本的参考地图；先找安装目录，再找其源码工作空间，需与关键帧库哈希相同 |
+| `keyframe_output_dir` | 空 | 可选查询统计 CSV 输出目录 |
 
 路径支持绝对路径或相对当前终端工作目录的路径。需要修改配置时，推荐复制到用户自己的配置目录，再通过参数指定，避免修改安装目录。
 
@@ -189,10 +202,12 @@ mid360_bringup:
       local_map_global: "/fast_lio/local_map_global"
       window_status: "/fast_lio/window_status"
       localization_status: "/localization/status"
+      keyframe_candidates: "/localization/keyframe_candidates"
+      keyframe_status: "/localization/keyframe_status"
       health: "/fast_lio/health"
 ```
 
-修改右侧话题名后，启动文件会同步配置驱动输出、FAST-LIO 输入和输出、监控订阅、局部地图以及 RViz 的订阅重映射。名称须是互不重复的绝对 ROS 话题名，例如 `/robot/odom`。`/map_save` 是固定的存图服务名；`odom`、`base_link`、`imu_link` 和 `lidar` 是 TF frame 名，不在此处修改。使用 `config_file:=/绝对路径/自定义.yaml` 时，自定义文件仍需包含原有 `topics` 字段；本次新增的 `gravity`、`local_map_global`、`window_status`、`localization_status` 缺省时使用上述默认名称。这里的话题配置只对组合启动生效。
+修改右侧话题名后，启动文件会同步配置驱动输出、FAST-LIO 输入和输出、监控订阅、局部地图以及 RViz 的订阅重映射。名称须是互不重复的绝对 ROS 话题名，例如 `/robot/odom`。KISS 定位节点当前固定订阅 `/localization/keyframe_candidates`，启用候选节点时此名称必须保持默认。`/map_save` 是固定的存图服务名；`odom`、`base_link`、`imu_link` 和 `lidar` 是 TF frame 名，不在此处修改。使用 `config_file:=/绝对路径/自定义.yaml` 时，自定义文件仍需包含原有 `topics` 字段；本次新增的话题字段缺省时使用上述默认名称。这里的话题配置只对组合启动生效。
 
 ### Fast-LIO YAML
 
@@ -207,10 +222,10 @@ mid360_bringup:
 | `preprocess.lidar_type` / `scan_line` / `timestamp_unit` / `scan_rate` | 1 / 4 / 3 / 10 | 雷达数据格式、扫描线、逐点时间单位与扫描频率；当前值对应 MID360 数据 |
 | `preprocess.blind` / `max_range` | 0.5 / 5.0 | FAST-LIO 输入点云距雷达的最小 / 最大距离，米 |
 | `mapping.acc_cov` / `gyr_cov` / `b_acc_cov` / `b_gyr_cov` | 0.1 / 0.1 / 0.0001 / 0.0001 | IMU 测量和偏置的噪声参数 |
-| `mapping.fov_degree` / `det_range` | 360.0 / 10.0 | 视场角 / 内部地图立方体移动阈值；`det_range` 不是点云最远距离过滤器 |
+| `mapping.fov_degree` / `det_range` | 360.0 / 5.0 | 视场角 / 内部地图立方体移动阈值；5 米值与 `wyn` 关键帧配置一致，实际点云过滤由 `preprocess.max_range` 控制 |
 | `mapping.extrinsic_est_en` | false | 统一入口要求固定外参 |
 | `mapping.extrinsic_T/R` | 文件内的平移和单位旋转矩阵 | 雷达到 IMU 的外参；算法与静态 TF 共用 |
-| `runtime_pos_log_enable` | false | 运行日志开关 |
+| `runtime_pos_log_enable` | true | 与 `wyn` 一致，记录运行状态供定位分析 |
 | `publish.path_en` / `effect_map_en` | true / false | 历史轨迹 / 有效特征点云的发布开关 |
 | `publish.map_en` | true | 是否累计点云并向 `/Laser_map` 发布；关闭后无法保存累计地图 |
 | `publish.scan_publish_en` / `dense_publish_en` / `scan_bodyframe_pub_en` | true / false / true | 当前帧点云发布、点云密度、机体系当前帧发布设置 |
@@ -218,7 +233,9 @@ mid360_bringup:
 
 只需里程计和当前帧配准点云、无需完整累计地图时，可将 `publish.map_en` 设为 `false` 并重启组合启动；这会同时停止历史点云的累计与发布，`/map_save` 将没有可保存的数据。需要存图时保持 `publish.map_en` 和 `pcd_save.pcd_save_en` 都为 `true`。`pcd_save.interval` 是原代码保留的分段存图字段，当前 `/map_save` 服务不使用它；存图文件名及目录由启动参数 `map_output_dir` 决定。
 
-`preprocess.max_range` 是点云预处理的上限，组合启动设为 `5.0` 米；设为 `0.0` 则不限制最大距离。它在点云进入 FAST-LIO 状态估计和建图前生效，原始驱动话题不会改变。单独启动 FAST-LIO 的 `src/FAST_LIO/config/mid360.yaml` 没有设置这一项，因此保持不限制最大距离。
+`preprocess.max_range` 是点云预处理的上限，组合启动设为 `5.0` 米；显式设为 `0.0` 则不限制最大距离。缺省或设为 `-1.0` 时沿用 `mapping.det_range`，使 `wyn` 的旧雷达 YAML 仍按其 5 米配置过滤。它在点云进入 FAST-LIO 状态估计和建图前生效，原始驱动话题不会改变。单独启动 FAST-LIO 的 `src/FAST_LIO/config/mid360.yaml` 显式设置为 `0.0`，保持原有的不限制最远距离行为。
+
+关键帧候选库的描述子使用 0.5～5 米的点。启用 `keyframe_candidates` 时，节点会检查 `mapping.det_range`、`preprocess.blind`、`preprocess.max_range`、固定外参以及参考地图和库的哈希。默认 40 帧库来自 `wyn` 的 `space_2/merged_20261111`，只适用于与其匹配的参考地图和区域；候选仅供 KISS 验证，节点本身不发布定位 TF。
 
 组合启动会根据 `topics.lidar/imu` 覆盖 YAML 中的 `common.lid_topic/imu_topic`，并设置 `world_frame=odom`、`body_frame=base_link` 和带启动时间的 `map_file_path`，因此组合启动时不要通过修改这几个 YAML 字段调整输入话题、frame 或存图路径。`extrinsic_R` 必须是合法的 3×3 旋转矩阵，启动时校验并转换为四元数；启动文件要求 `extrinsic_est_en=false`，确保建图计算和静态 TF 使用同一组固定外参。
 
@@ -243,6 +260,24 @@ ros2 launch mid360_bringup mid360_mapping.launch.py \
   config_file:=/绝对路径/mid360_robot.yaml \
   driver_config:=/绝对路径/MID360_config.json
 ```
+
+### 接入独立的 KISS 定位工作空间
+
+在启动本包之前加载 KISS 安装环境，使窗口节点能订阅 `LocalizationResult`，关键帧节点能使用 `KeyframeCandidates` 消息：
+
+```bash
+source /opt/ros/humble/setup.bash
+source /home/jinghao/Fast_lio_ws/install/setup.bash
+source "/home/jinghao/wyn/导航工程/kiss_localization_ws1.1/install/setup.bash"
+export LD_LIBRARY_PATH="/home/jinghao/Fast_lio_ws/external/lib:${LD_LIBRARY_PATH:-}"
+ros2 launch mid360_bringup mid360_mapping.launch.py rviz:=false
+```
+
+若再使用 `wyn/mid360_lidar/launch/continuous_localization.launch.py` 启用 `keyframe_initialization_enabled:=true`，保持上面组合启动的 `keyframe_candidates:=false`（默认值）：`wyn` 的定位启动文件会自行启动候选发布者。若改为单独启动 KISS 定位节点，可设 `keyframe_candidates:=true`，由本包发布 `/localization/keyframe_candidates`；同时要给 KISS 传入与 40 帧库一致的地图、区域、库哈希和描述子哈希。不要同时运行两份候选发布者。
+
+`building_split_space.pcd` 已复制到 `wyn` 的 KISS 安装目录，`continuous_localization.launch.py` 的默认 `map_pcd` 路径可直接使用。`keyframe_map` 留空时优先使用这份安装地图；若以后重建 KISS 导致安装地图缺失，则回退查找其源码地图。
+
+KISS 参考地图和定位算法仍保留在独立的 `kiss_localization_ws1.1`；本包只提供传感器数据与可选外部候选。`keyframe_candidates` 默认关闭，普通建图不依赖 KISS。存图方式保持本包原有行为；本包不启动录包。
 
 ## 6. 标准运行示例
 

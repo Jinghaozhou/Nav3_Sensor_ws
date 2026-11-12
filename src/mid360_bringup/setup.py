@@ -1,13 +1,18 @@
 from setuptools import setup
 from glob import glob
+from os import walk
 from os.path import isfile
+from pathlib import Path
 setup(name='mid360_bringup', version='0.1.0', packages=['mid360_bringup'],
  data_files=[('share/ament_index/resource_index/packages',['resource/mid360_bringup']),
  ('share/mid360_bringup',['package.xml','README.md']),
- *[('share/mid360_bringup/'+d,[f for f in glob(d+'/*') if isfile(f)]) for d in ['launch','config','rviz']]],
+ *[('share/mid360_bringup/'+d,[f for f in glob(d+'/*') if isfile(f)]) for d in ['launch','config','rviz']],
+ *[(str(Path('share/mid360_bringup')/root), [str(Path(root)/name) for name in names])
+   for root, _, names in walk('reference_maps') if names]],
  install_requires=['setuptools'], zip_safe=True, maintainer='Jinghao',
  maintainer_email='zhoujinghao188@gmail.com', description='MID360 unified mapping bringup',
  license='Apache-2.0', entry_points={'console_scripts':[
  'livox_monitor = mid360_bringup.livox_monitor:main',
  'local_map_window = mid360_bringup.local_map_window:main',
- 'save_map = mid360_bringup.save_map:main']})
+ 'save_map = mid360_bringup.save_map:main',
+ 'keyframe_retriever = mid360_bringup.keyframe_retriever:main']})

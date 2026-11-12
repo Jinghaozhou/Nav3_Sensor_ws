@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "algorithm": "scan_context_style_max_height_v1",
+  "input_frame": "base_link_at_window_end",
+  "window_target_seconds": 1.0,
+  "radius_m": 5.0,
+  "blind_m": 0.5,
+  "range_rule": "3d_sphere_from_lidar_origin",
+  "voxel_m": 0.1,
+  "rings": 20,
+  "sectors": 60,
+  "height_bias_m": 5.1,
+  "value": "maximum_gravity_aligned_z_plus_numeric_bias",
+  "empty_cell": 0.0,
+  "heading": "base_X_projected_to_gravity_plane_else_base_Y",
+  "origin": "lidar_origin_in_base",
+  "min_points": 1000,
+  "upstream_reference": "https://github.com/gisbi-kim/scancontext",
+  "compatibility": "experimental_profile_not_upstream_database_compatible"
+}

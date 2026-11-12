@@ -1,0 +1,13 @@
+{
+  "state": "geometry_checked_descriptors_ready",
+  "keyframes": 40,
+  "geometry_passed": 40,
+  "map_sha256": "c84fba59d8c6342aa72c5c53599152295e27948ff0e3317d95fd9f3c12c1ab55",
+  "profile_sha256": "759ba37f78e7d9afc1657f89e45c7790a0a7089e708e029e8fa3687f2536989c",
+  "source_index_sha256": "3d8e00580ed2201cabd558e0eff89bf2c85ba0fc5a00ed953e745c33b4880032",
+  "min_map_30cm_fraction": 0.9694242034576368,
+  "max_map_inlier_rmse_m": 0.05166084643804039,
+  "online_enabled": false,
+  "independent_retrieval_test_passed": false,
+  "note": "Training-source runs are regression data after merging, not independent accuracy tests."
+}
