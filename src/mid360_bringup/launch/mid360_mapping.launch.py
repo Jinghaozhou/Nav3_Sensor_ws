@@ -13,7 +13,14 @@ from launch_ros.actions import Node
 
 
 TOPIC_KEYS = ('lidar', 'imu', 'odom', 'local_cloud', 'body_cloud',
-              'effect_cloud', 'laser_map', 'path', 'local_map', 'health')
+              'effect_cloud', 'laser_map', 'path', 'local_map', 'health',
+              'gravity', 'local_map_global', 'window_status', 'localization_status')
+NEW_TOPIC_DEFAULTS = {
+    'gravity': '/fast_lio/gravity',
+    'local_map_global': '/fast_lio/local_map_global',
+    'window_status': '/fast_lio/window_status',
+    'localization_status': '/localization/status',
+}
 ABSOLUTE_TOPIC = re.compile(r'^/[A-Za-z_][A-Za-z0-9_]*(?:/[A-Za-z_][A-Za-z0-9_]*)*$')
 
 
@@ -24,6 +31,8 @@ def start(context):
     config_data = yaml.safe_load(config.read_text())
     params = config_data['/**']['ros__parameters']
     topics = config_data['mid360_bringup']['ros__parameters']['topics']
+    # Existing custom YAML files remain usable after adding the new interfaces.
+    topics = {**NEW_TOPIC_DEFAULTS, **topics}
     for key in TOPIC_KEYS:
         name = topics.get(key)
         if not isinstance(name, str) or not ABSOLUTE_TOPIC.fullmatch(name):
@@ -66,6 +75,7 @@ def start(context):
                     ('/cloud_registered_body',topics['body_cloud']),
                     ('/cloud_effected',topics['effect_cloud']),
                     ('/Laser_map',topics['laser_map']),
+                    ('/fast_lio/gravity',topics['gravity']),
                     ('/path',topics['path'])]))
     nodes.extend([
         Node(package='tf2_ros', executable='static_transform_publisher', name='base_imu_tf',
@@ -78,10 +88,20 @@ def start(context):
             arguments=['--lidar-topic',topics['lidar'],'--imu-topic',topics['imu'],
                        '--odom-topic',topics['odom'],'--health-topic',topics['health']]))
     if enabled('local_map'):
-        nodes.append(Node(package='mid360_bringup', executable='local_map_window', parameters=[common], output='screen',
-            arguments=['--window-time',value('window_time'),'--window-frames',value('window_frames'),
+        window_args = ['--window-time',value('window_time'),
+                       '--tracking-window-time',value('tracking_window_time'),
+                       '--window-frames',value('window_frames'),
+                       '--max-buffer-points',value('max_buffer_points'),
                        '--voxel',value('local_map_voxel'),'--rate',value('local_map_rate'),
-                       '--in-topic',topics['local_cloud'],'--out-topic',topics['local_map']]))
+                       '--recovery-failures',value('recovery_failures'),
+                       '--in-topic',topics['local_cloud'],'--out-topic',topics['local_map'],
+                       '--global-topic',topics['local_map_global'],
+                       '--window-status-topic',topics['window_status'],
+                       '--localization-status-topic',topics['localization_status']]
+        if enabled('adaptive_window'):
+            window_args.append('--adaptive')
+        nodes.append(Node(package='mid360_bringup', executable='local_map_window', parameters=[common], output='screen',
+            arguments=window_args))
     if enabled('rviz'):
         rviz_topics = {'odom':'/fast_lio/odom', 'path':'/path',
                        'laser_map':'/Laser_map', 'local_map':'/fast_lio/local_map',
@@ -103,9 +123,15 @@ def generate_launch_description():
         'driver_config':(str(share/'config/MID360_config.json'),'Lidar network JSON path'),
         'rviz_config':(str(share/'rviz/fastlio_map.rviz'),'RViz configuration'),
         'map_output_dir':(str(Path.home()/'Fast_lio_ws/maps'),'Writable map output directory'),
-        'window_time':('5.0','Local map time window seconds'), 'window_frames':('100','Maximum frame count'),
-        'local_map_voxel':('0.15','Local map voxel size meters'), 'local_map_rate':('2.0','Local map publication Hz')}
-    boolean = {'driver','use_sim_time','rviz','monitor','local_map'}
+        'window_time':('120.0','Long local map time window seconds'),
+        'tracking_window_time':('30.0','Tracking local map time window seconds'),
+        'window_frames':('1500','Maximum retained frame count'),
+        'max_buffer_points':('3000000','Maximum retained point count'),
+        'local_map_voxel':('0.15','Local map voxel size meters'),
+        'local_map_rate':('1.0','Local map publication Hz'),
+        'adaptive_window':('true','Use KISS localization status to switch windows when available'),
+        'recovery_failures':('3','Consecutive localization failures before using the long window')}
+    boolean = {'driver','use_sim_time','rviz','monitor','local_map','adaptive_window'}
     return LaunchDescription([DeclareLaunchArgument(n,default_value=v,description=d,
         **({'choices':['true','false']} if n in boolean else {})) for n,(v,d) in defaults.items()]
         + [OpaqueFunction(function=start)])

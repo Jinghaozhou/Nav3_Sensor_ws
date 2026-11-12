@@ -1,33 +1,43 @@
 #!/usr/bin/env python3
-"""FIFO local point-cloud window preserving input frame and intensity."""
+"""Publish long and adaptive short point-cloud windows in the odom frame."""
 
 import argparse
+import json
 import sys
 from collections import deque
 
 import numpy as np
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 from rclpy.time import Time
 from sensor_msgs.msg import PointCloud2, PointField
+from std_msgs.msg import String
 
 
 def parse_cloud(msg):
-    """PointCloud2(x y z intensity) → (xyz[N,3], intensity[N] 或 None)。"""
+    """Read XYZ and intensity using PointCloud2 offsets, padding and byte order."""
     endian = '>' if msg.is_bigendian else '<'
+    formats = {PointField.FLOAT32: 'f4', PointField.FLOAT64: 'f8',
+               PointField.UINT8: 'u1', PointField.UINT16: 'u2'}
     fields = {f.name: f for f in msg.fields}
-    def field(name):
+
+    if msg.width * msg.height == 0:
+        return np.empty((0, 3), np.float32), np.empty(0, np.float32)
+
+    def channel(name):
         f = fields[name]
-        if f.datatype != PointField.FLOAT32 or f.count != 1:
-            raise ValueError('Expected scalar FLOAT32 field: ' + name)
-        return np.ndarray((msg.height, msg.width), dtype=endian+'f4',
+        if f.count != 1 or f.datatype not in formats:
+            raise ValueError('Unsupported scalar PointCloud2 field: ' + name)
+        return np.ndarray((msg.height, msg.width), dtype=endian + formats[f.datatype],
                           buffer=msg.data, offset=f.offset,
-                          strides=(msg.row_step, msg.point_step)).reshape(-1).copy()
-    xyz = np.column_stack([field(n) for n in ('x','y','z')])
-    intensity = field('intensity') if 'intensity' in fields else None
+                          strides=(msg.row_step, msg.point_step)).reshape(-1)
+
+    xyz = np.column_stack([channel(n) for n in ('x', 'y', 'z')]).astype(np.float32)
+    intensity = (channel('intensity').astype(np.float32)
+                 if 'intensity' in fields else np.zeros(len(xyz), np.float32))
     valid = np.isfinite(xyz).all(axis=1)
-    return xyz[valid], intensity[valid] if intensity is not None else None
+    return xyz[valid], np.nan_to_num(intensity[valid], nan=0.0, posinf=0.0, neginf=0.0)
 
 
 def build_cloud(stamp, frame_id, xyz, intensity=None):
@@ -36,7 +46,8 @@ def build_cloud(stamp, frame_id, xyz, intensity=None):
     msg.header.frame_id = frame_id
     msg.height = 1
     msg.width = len(xyz)
-    msg.is_dense = False
+    msg.is_dense = True
+    msg.is_bigendian = False
     msg.point_step = 16
     msg.row_step = msg.width * 16
     msg.fields = [
@@ -45,11 +56,11 @@ def build_cloud(stamp, frame_id, xyz, intensity=None):
         PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1),
         PointField(name='intensity', offset=12, datatype=PointField.FLOAT32, count=1),
     ]
-    arr = np.zeros((len(xyz), 4), dtype=np.float32)
+    arr = np.zeros((len(xyz), 4), dtype='<f4')
     arr[:, :3] = xyz
     if intensity is not None and len(intensity) == len(xyz):
         arr[:, 3] = intensity
-    msg.data = arr.astype(np.float32).tobytes()
+    msg.data = arr.tobytes()
     return msg
 
 
@@ -62,71 +73,135 @@ def voxel_indices(xyz, voxel):
 
 
 class LocalMapWindow(Node):
-    def __init__(self, window_time, window_frames, voxel, rate,
-                 in_topic, out_topic):
+    def __init__(self, args):
         super().__init__('local_map_window')
-        self.frame_id = None
-        self.window = deque()          # (Time, xyz, intensity)
-        self.window_time = window_time
-        self.window_frames = window_frames
-        self.voxel = voxel
-        qos = QoSProfile(depth=5, history=HistoryPolicy.KEEP_LAST,
-                         reliability=ReliabilityPolicy.BEST_EFFORT)
-        self.create_subscription(PointCloud2, in_topic, self.on_cloud, qos)
-        self.pub = self.create_publisher(PointCloud2, out_topic, 10)
-        self.timer = self.create_timer(1.0 / rate, self.publish_window)
-        self.get_logger().info(f'窗口 {window_time}s / {window_frames} 帧, '
-                               f'体素 {voxel}m, {in_topic} → {out_topic}')
+        self.args = args
+        self.window = deque()  # (sensor stamp, XYZ, intensity)
+        self.retained_points = 0
+        self.tracking = False
+        self.failures = 0
+        self.adaptive_enabled = False
+        input_qos = QoSProfile(depth=5, reliability=ReliabilityPolicy.BEST_EFFORT)
+        self.create_subscription(PointCloud2, args.in_topic, self.on_cloud, input_qos)
+        self.local_pub = self.create_publisher(PointCloud2, args.out_topic, 1)
+        self.global_pub = self.create_publisher(PointCloud2, args.global_topic, 1)
+        self.status_pub = self.create_publisher(String, args.window_status_topic, 1)
+        if args.adaptive:
+            try:
+                from kiss_matcher_localization.msg import LocalizationResult
+            except ImportError:
+                self.get_logger().warn('KISS LocalizationResult unavailable; using the long window only')
+            else:
+                status_qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE,
+                                        durability=DurabilityPolicy.TRANSIENT_LOCAL)
+                self.create_subscription(LocalizationResult, args.localization_status_topic,
+                                         self.on_localization_status, status_qos)
+                self.adaptive_enabled = True
+        self.timer = self.create_timer(1.0 / args.rate, self.publish_window)
+        self.get_logger().info(
+            f'window={args.window_time}s tracking={args.tracking_window_time}s '
+            f'frames={args.window_frames} points={args.max_buffer_points} '
+            f'adaptive={self.adaptive_enabled}')
+
+    def on_localization_status(self, result):
+        if result.applied:
+            self.tracking, self.failures = True, 0
+        elif self.tracking:
+            self.failures += 1
+            if self.failures >= self.args.recovery_failures:
+                self.tracking = False
 
     def on_cloud(self, msg):
-        if self.frame_id is not None and self.frame_id != msg.header.frame_id:
-            self.get_logger().error('Input frame changed; clearing window')
-            self.window.clear()
-        self.frame_id = msg.header.frame_id
+        if msg.header.frame_id != 'odom':
+            self.get_logger().error(f'Input frame {msg.header.frame_id!r}, expected odom')
+            return
         xyz, intensity = parse_cloud(msg)
+        if not len(xyz):
+            return
         stamp = Time.from_msg(msg.header.stamp)
-        if self.window and stamp < self.window[-1][0]:
-            # Bag seek/restart: discard frames from the previous timeline.
+        if self.window and stamp.nanoseconds <= self.window[-1][0].nanoseconds:
             self.window.clear()
+            self.retained_points = 0
+            self.tracking, self.failures = False, 0
+            self.get_logger().warn('Sensor time reset; cleared local-map window')
+        idx = voxel_indices(xyz, self.args.voxel)
+        xyz, intensity = xyz[idx], intensity[idx]
+        if len(xyz) > self.args.max_buffer_points:
+            step = int(np.ceil(len(xyz) / self.args.max_buffer_points))
+            xyz, intensity = xyz[::step], intensity[::step]
         self.window.append((stamp, xyz, intensity))
-        # FIFO:过期帧(超时间窗)从队头弹出
-        while (self.window and
-               (stamp - self.window[0][0]).nanoseconds / 1e9 > self.window_time):
-            self.window.popleft()
-        # 帧数上限:超了弹队头
-        while len(self.window) > self.window_frames:
-            self.window.popleft()
+        self.retained_points += len(xyz)
+        while (len(self.window) > 1 and
+               ((stamp - self.window[0][0]).nanoseconds / 1e9 > self.args.window_time or
+                len(self.window) > self.args.window_frames or
+                self.retained_points > self.args.max_buffer_points)):
+            self.retained_points -= len(self.window.popleft()[1])
+
+    def make_window(self, seconds):
+        latest = self.window[-1][0]
+        frames = [frame for frame in self.window
+                  if (latest - frame[0]).nanoseconds / 1e9 <= seconds]
+        xyz = np.vstack([frame[1] for frame in frames])
+        intensity = np.concatenate([frame[2] for frame in frames])
+        idx = voxel_indices(xyz, self.args.voxel)
+        cloud = build_cloud(latest.to_msg(), 'odom', xyz[idx], intensity[idx])
+        span = (latest - frames[0][0]).nanoseconds / 1e9
+        return cloud, len(frames), span
 
     def publish_window(self):
         if not self.window:
             return
-        xyz = np.vstack([f[1] for f in self.window])
-        it = np.concatenate([f[2] for f in self.window]) if all(f[2] is not None for f in self.window) else None
-        idx = voxel_indices(xyz, self.voxel)
-        msg = build_cloud(self.window[-1][0].to_msg(), self.frame_id, xyz[idx],
-                          it[idx] if it is not None else None)
-        self.pub.publish(msg)
+        latest = self.window[-1][0]
+        age = (self.get_clock().now() - latest).nanoseconds / 1e9
+        if age > 2.0 or age < -1.0:
+            return
+        long_cloud, long_frames, long_span = self.make_window(self.args.window_time)
+        self.global_pub.publish(long_cloud)
+        seconds = (self.args.tracking_window_time if self.tracking
+                   else self.args.window_time)
+        if self.tracking:
+            local_cloud, local_frames, local_span = self.make_window(seconds)
+        else:
+            local_cloud, local_frames, local_span = long_cloud, long_frames, long_span
+        self.local_pub.publish(local_cloud)
+        status = dict(schema_version=2, cloud_stamp_ns=latest.nanoseconds,
+                      window_start_ns=self.window[-local_frames][0].nanoseconds,
+                      long_window_start_ns=self.window[-long_frames][0].nanoseconds,
+                      long_requested_seconds=self.args.window_time,
+                      local_topic=self.args.out_topic, global_topic=self.args.global_topic,
+                      mode='tracking' if self.tracking else 'initial_or_recovery',
+                      requested_seconds=seconds, actual_seconds=round(local_span, 2),
+                      frames=local_frames, points=local_cloud.width,
+                      retained_frames=long_frames, retained_points=self.retained_points,
+                      long_actual_seconds=round(long_span, 2), long_points=long_cloud.width)
+        self.status_pub.publish(String(data=json.dumps(status)))
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--window-time', type=float, default=5.0,
-                    help='时间窗长度秒(默认 5)')
-    ap.add_argument('--window-frames', type=int, default=100,
-                    help='帧数上限(默认 100)')
-    ap.add_argument('--voxel', type=float, default=0.15,
-                    help='发布前体素抽稀(m,默认 0.15)')
-    ap.add_argument('--rate', type=float, default=2.0, help='发布频率(默认 2Hz)')
+    ap.add_argument('--window-time', type=float, default=120.0)
+    ap.add_argument('--tracking-window-time', type=float, default=30.0)
+    ap.add_argument('--window-frames', type=int, default=1500)
+    ap.add_argument('--max-buffer-points', type=int, default=3000000)
+    ap.add_argument('--voxel', type=float, default=0.15)
+    ap.add_argument('--rate', type=float, default=1.0)
     ap.add_argument('--in-topic', default='/fast_lio/local_cloud')
     ap.add_argument('--out-topic', default='/fast_lio/local_map')
+    ap.add_argument('--global-topic', default='/fast_lio/local_map_global')
+    ap.add_argument('--window-status-topic', default='/fast_lio/window_status')
+    ap.add_argument('--localization-status-topic', default='/localization/status')
+    ap.add_argument('--adaptive', action='store_true')
+    ap.add_argument('--recovery-failures', type=int, default=3)
     args, ros_args = ap.parse_known_args()
-    if min(args.window_time, args.window_frames, args.voxel, args.rate) <= 0:
-        ap.error('Window, voxel and rate must be positive')
+    if min(args.window_time, args.tracking_window_time, args.window_frames,
+           args.max_buffer_points, args.voxel, args.rate, args.recovery_failures) <= 0:
+        ap.error('Window, voxel, rate and buffer limits must be positive')
+    if args.tracking_window_time > args.window_time:
+        ap.error('Tracking window cannot exceed the long window')
 
     rclpy.init(args=ros_args)
-    node = LocalMapWindow(args.window_time, args.window_frames, args.voxel,
-                          args.rate, args.in_topic, args.out_topic)
+    node = LocalMapWindow(args)
     try:
         rclpy.spin(node)
     except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):

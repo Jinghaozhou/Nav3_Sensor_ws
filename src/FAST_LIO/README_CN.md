@@ -16,7 +16,7 @@
 | Livox 驱动工作空间 | `/home/pc/livox_ws` |
 | 有线网卡 | `eno2` |
 | 主机有线 IP | `192.168.1.5/24` |
-| MID360 IP | `192.168.1.106` |
+| MID360 IP | `192.168.1.134` |
 
 这台电脑的算力和内存足够实时运行 FAST-LIO2。Livox ROS 2 驱动已经编译，位置为：
 
@@ -35,10 +35,10 @@ MID360 使用网线连接电脑的 `eno2` 接口。本机已经有名为 `livox-
 ```bash
 sudo nmcli connection up livox-mid360
 ip -br -4 addr show eno2
-ping -c 4 192.168.1.106
+ping -c 4 192.168.1.134
 ```
 
-正常时，`eno2` 应显示 `192.168.1.5/24`，并且能 ping 通 `192.168.1.106`。
+正常时，`eno2` 应显示 `192.168.1.5/24`，并且能 ping 通 `192.168.1.134`。
 
 驱动使用的配置文件是：
 
@@ -50,7 +50,7 @@ ping -c 4 192.168.1.106
 
 ```text
 host IP : 192.168.1.5
-LiDAR IP: 192.168.1.106
+LiDAR IP: 192.168.1.134
 ```
 
 如果更换了 MID360，必须把 JSON 中 `lidar_configs` 下的 `ip` 改成新雷达的真实 IP。主机 IP、JSON 中的 `host_net_info` 和 `eno2` 的静态 IP 必须保持一致。
@@ -308,11 +308,11 @@ source /home/pc/livox_ws/install/setup.bash
 
 ```bash
 ip -br -4 addr show eno2
-ping -c 4 192.168.1.106
+ping -c 4 192.168.1.134
 grep -n '192.168.1' /home/pc/livox_ws/src/livox_ros_driver2/config/MID360_config.json
 ```
 
-主机必须是 `192.168.1.5/24`，当前雷达必须是 `192.168.1.106`，网线和雷达供电必须正常。
+主机必须是 `192.168.1.5/24`，当前雷达必须是 `192.168.1.134`，网线和雷达供电必须正常。
 
 ### 点云跳动、重影或轨迹漂移
 
@@ -332,7 +332,7 @@ MID360 使用内置 IMU 时保持 `time_sync_en: false`。只有外部时间同�
 
 ```bash
 sudo nmcli connection up livox-mid360
-ping -c 4 192.168.1.106
+ping -c 4 192.168.1.134
 
 cd /home/pc/Fast_lio_ws/src/FAST_LIO
 git clone -b fast_lio https://github.com/hku-mars/ikd-Tree.git include/ikd-Tree

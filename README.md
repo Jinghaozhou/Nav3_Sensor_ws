@@ -23,7 +23,7 @@
 | ROS 2 | Humble |
 | 有线网卡 | `eno2` |
 | 主机有线 IP | `192.168.1.5/24` |
-| MID360 IP | `192.168.1.106` |
+| MID360 IP | `192.168.1.134` |
 | 雷达点云话题 | `/livox/lidar` |
 | IMU 话题 | `/livox/imu` |
 
@@ -147,7 +147,7 @@ ros2 pkg executables mid360_bringup
 
 ## 5. 配置 MID360 网络
 
-本机有线接口为 `eno2`，已创建 `livox-mid360` 静态地址连接，主机地址为 `192.168.1.5/24`。已验证雷达 `192.168.1.106` 可达。直接连接雷达时应使用静态地址；自动获取 IP 会因没有 DHCP 服务而连接失败。
+本机有线接口为 `eno2`，已创建 `livox-mid360` 静态地址连接，主机地址为 `192.168.1.5/24`。当前配置的雷达地址为 `192.168.1.134`，启动前请用下方命令确认可达。直接连接雷达时应使用静态地址；自动获取 IP 会因没有 DHCP 服务而连接失败。
 
 更换网卡后，请通过 `ip -br -4 addr` 确认接口名并调整下方命令。
 
@@ -164,13 +164,13 @@ sudo nmcli connection add type ethernet ifname eno2 con-name livox-mid360 \
 ```bash
 sudo nmcli connection up livox-mid360
 ip -br -4 addr show eno2
-ping -c 4 192.168.1.106
+ping -c 4 192.168.1.134
 ```
 
 正常状态：
 
 - `eno2` 地址为 `192.168.1.5/24`；
-- 能 ping 通 MID360 的 `192.168.1.106`；
+- 能 ping 通 MID360 的 `192.168.1.134`；
 - Wi-Fi 可继续用于上网，有线连接不需要网关和 DNS。
 
 驱动配置中的地址必须与实际设备一致：
@@ -182,7 +182,7 @@ ping -c 4 192.168.1.106
   "imu_data_ip": "192.168.1.5"
 },
 "lidar_configs": [
-  { "ip": "192.168.1.106" }
+  { "ip": "192.168.1.134" }
 ]
 ```
 
@@ -250,6 +250,7 @@ ros2 topic hz /Odometry
 ros2 topic hz /cloud_registered
 ros2 topic hz /cloud_registered_body
 ros2 topic hz /Laser_map
+ros2 topic echo /fast_lio/gravity --once
 ros2 topic echo /Odometry --once
 ```
 
@@ -264,6 +265,7 @@ ros2 topic echo /Odometry --once
 | `/cloud_registered` | 世界坐标系下的当前配准点云 |
 | `/cloud_registered_body` | IMU/机体坐标系下的点云 |
 | `/Laser_map` | 累积点云地图 |
+| `/fast_lio/gravity` | FAST-LIO 估计的世界系重力向量，`geometry_msgs/msg/Vector3Stamped` |
 | `/tf` | `camera_init -> body` 动态变换 |
 
 `/livox/lidar` 和 `/livox/imu` 是驱动提供给 FAST-LIO 的输入，不是 FAST-LIO 输出。
@@ -300,7 +302,7 @@ ls -lh /home/jinghao/Fast_lio_ws/maps/mid360_map.pcd
 ```bash
 # 接好雷达后启用有线连接
 sudo nmcli connection up livox-mid360
-ping -c 4 192.168.1.106
+ping -c 4 192.168.1.134
 ```
 
 终端1：
@@ -338,7 +340,7 @@ colcon list
 
 ```bash
 ip -br -4 addr show eno2
-ping -c 4 192.168.1.106
+ping -c 4 192.168.1.134
 ros2 topic list -t | grep livox
 ```
 
@@ -375,7 +377,7 @@ ros2 topic hz /livox/imu
 ```bash
 cd /home/jinghao/Fast_lio_ws
 sudo nmcli connection up livox-mid360
-ping -c 4 192.168.1.106
+ping -c 4 192.168.1.134
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 export LD_LIBRARY_PATH="$PWD/external/lib:${LD_LIBRARY_PATH:-}"

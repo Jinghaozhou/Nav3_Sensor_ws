@@ -18,7 +18,7 @@ mid360_bringup/
 ├── rviz/fastlio_map.rviz        RViz 显示配置
 └── mid360_bringup/
     ├── livox_monitor.py         频率、CPU 和内存监控
-    ├── local_map_window.py      滑动窗口局部地图
+    ├── local_map_window.py      长/短窗口局部地图及状态输出
     └── save_map.py              PCD 存图客户端
 ```
 
@@ -74,7 +74,7 @@ export LD_LIBRARY_PATH="$PWD/external/lib:${LD_LIBRARY_PATH:-}"
 ros2 launch mid360_bringup mid360_mapping.launch.py rviz:=false
 ```
 
-默认网络配置位于 `config/MID360_config.json`：主机地址为 `192.168.1.5`，雷达地址为 `192.168.1.106`。不同设备可通过 `driver_config` 指定另一份 JSON。主机有线接口须配置为 `192.168.1.5/24`，网线、供电和雷达 IP 须匹配。
+默认网络配置位于 `config/MID360_config.json`：主机地址为 `192.168.1.5`，雷达地址为 `192.168.1.134`。不同设备可通过 `driver_config` 指定另一份 JSON。主机有线接口须配置为 `192.168.1.5/24`，网线、供电和雷达 IP 须匹配。
 
 组合启动默认只将距雷达 0.5～5 米的点送入 FAST-LIO，用于里程计、当前帧点云和地图。驱动原始话题 `/lidar_points` 不受该过滤影响；范围在 `mid360_robot.yaml` 的 `preprocess.blind` 和 `preprocess.max_range` 中调整。
 
@@ -99,18 +99,24 @@ ros2 run mid360_bringup save_map
 | `/lidar_points` | livox_ros_driver2/msg/CustomMsg | 10 Hz | `lidar`，含逐点时间信息的原始点云 |
 | `/imu` | sensor_msgs/msg/Imu | 约 200 Hz | `imu_link` |
 | `/fast_lio/odom` | nav_msgs/msg/Odometry | 约 10 Hz | header=`odom`，child=`base_link` |
+| `/fast_lio/gravity` | geometry_msgs/msg/Vector3Stamped | 约 10 Hz | `odom`，FAST-LIO 估计的重力向量 |
 | `/fast_lio/local_cloud` | sensor_msgs/msg/PointCloud2 | 约 10 Hz | `odom`，配准后的当前帧 |
 | `/fast_lio/body_cloud` | sensor_msgs/msg/PointCloud2 | 约 10 Hz | `base_link`，机体系当前帧 |
 | `/fast_lio/effect_cloud` | sensor_msgs/msg/PointCloud2 | 按配置 | `odom`，默认不发布有效特征点 |
 | `/Laser_map` | sensor_msgs/msg/PointCloud2 | 默认约 1 Hz；可关闭 | `odom`，从本次运行开始按周期累积的点云 |
 | `/path` | nav_msgs/msg/Path | 算法内部抽样 | `odom`，历史轨迹 |
-| `/fast_lio/local_map` | sensor_msgs/msg/PointCloud2 | 默认 2 Hz | `odom`，滑动窗口累计点云 |
+| `/fast_lio/local_map` | sensor_msgs/msg/PointCloud2 | 默认 1 Hz | `odom`，初始化/恢复时 120 秒窗口，定位成功时 30 秒窗口 |
+| `/fast_lio/local_map_global` | sensor_msgs/msg/PointCloud2 | 默认 1 Hz | `odom`，始终使用 120 秒长窗口 |
+| `/fast_lio/window_status` | std_msgs/msg/String | 默认 1 Hz | JSON：模式、请求与实际窗口时长、帧数、点数及时间戳 |
+| `/localization/status` | kiss_matcher_localization/msg/LocalizationResult | 按定位节点 | 可选输入；`applied` 决定长/短窗口切换 |
 | `/fast_lio/health` | std_msgs/msg/Float32MultiArray | 1 Hz（墙钟） | 见下面字段定义 |
 | `/map_save` | std_srvs/srv/Trigger | 按需 | 保存当前累计地图；返回成功与实际路径 |
 
 健康数组：`[lidar_hz, imu_hz, odom_hz, healthy, rss_mb, cpu_pct]`。默认健康阈值为 8/150/8 Hz 且 `fastlio_mapping` 进程存在。健康状态衡量链路频率和进程存活，不判断位姿漂移或滤波器发散。监控使用墙钟，bag 暂停时会显示频率下降；CPU 百分比可因多核超过 100%。默认假定只运行一个 Fast-LIO 实例。
 
-算法点云和里程计采用默认可靠 QoS；监控输入采用可靠、深度 1000，以免浅队列漏计 IMU；局部地图输入采用 BEST_EFFORT，可订阅可靠发布者；局部地图输出为可靠、深度 10。局部地图是时间窗累计点云，不执行动态物体剔除；输入停止后仍保留并发布最后窗口，其时间戳保持最后输入时间，下游应检查数据新鲜度。`/Laser_map` 每次发送的都是截至当前的累计点云，运行越久消息越大；关闭累计与发布后，仍有 FAST-LIO 用于位姿估计的内部地图，但不再保留供 `/map_save` 使用的历史累计点云。
+算法点云和里程计采用默认可靠 QoS；监控输入采用可靠、深度 1000，以免浅队列漏计 IMU；局部地图输入采用 BEST_EFFORT，可订阅可靠发布者；局部地图输出为可靠、深度 1。局部地图是时间窗累计点云，不执行动态物体剔除；输入停止超过 2 秒后不再重发旧窗口。实际窗口可能因帧数、点数限制而短于设置值，可查看 `/fast_lio/window_status` 的 `actual_seconds`、`frames`、`points`。`/Laser_map` 每次发送的都是截至当前的累计点云，运行越久消息越大；关闭累计与发布后，仍有 FAST-LIO 用于位姿估计的内部地图，但不再保留供 `/map_save` 使用的历史累计点云。
+
+开启 `adaptive_window` 时，如果环境中可导入 `kiss_matcher_localization/msg/LocalizationResult`，定位结果 `applied=true` 切换到 30 秒短窗口，连续 3 次 `applied=false` 后恢复 120 秒长窗口。未安装或未 source KISS 消息包时，节点会提示并保持长窗口；无需 KISS 时可设置 `adaptive_window:=false`。该功能只订阅定位状态，不启动定位节点。
 
 ### TF 和 frame 定义
 
@@ -151,10 +157,14 @@ ros2 launch mid360_bringup mid360_mapping.launch.py --show-args
 | `driver_config` | 包内 MID360_config.json | 网络配置路径 |
 | `rviz_config` | 包内 fastlio_map.rviz | RViz 配置路径 |
 | `map_output_dir` | ~/Fast_lio_ws/maps | 可写地图输出目录 |
-| `window_time` | 5.0 | 局部地图时间窗，秒 |
-| `window_frames` | 100 | 局部地图最多帧数 |
+| `window_time` | 120.0 | 长窗口时间，秒 |
+| `tracking_window_time` | 30.0 | 定位成功后的短窗口时间，秒 |
+| `window_frames` | 1500 | 最多保留帧数 |
+| `max_buffer_points` | 3000000 | 最多保留点数；实际窗口可能缩短 |
 | `local_map_voxel` | 0.15 | 局部地图抽稀体素，米 |
-| `local_map_rate` | 2.0 | 局部地图发布 Hz |
+| `local_map_rate` | 1.0 | 局部地图发布 Hz |
+| `adaptive_window` | true | 有 KISS 定位消息时按定位状态切换长/短窗口 |
+| `recovery_failures` | 3 | 连续定位失败多少次后恢复长窗口 |
 
 路径支持绝对路径或相对当前终端工作目录的路径。需要修改配置时，推荐复制到用户自己的配置目录，再通过参数指定，避免修改安装目录。
 
@@ -169,16 +179,20 @@ mid360_bringup:
       lidar: "/lidar_points"
       imu: "/imu"
       odom: "/fast_lio/odom"
+      gravity: "/fast_lio/gravity"
       local_cloud: "/fast_lio/local_cloud"
       body_cloud: "/fast_lio/body_cloud"
       effect_cloud: "/fast_lio/effect_cloud"
       laser_map: "/Laser_map"
       path: "/path"
       local_map: "/fast_lio/local_map"
+      local_map_global: "/fast_lio/local_map_global"
+      window_status: "/fast_lio/window_status"
+      localization_status: "/localization/status"
       health: "/fast_lio/health"
 ```
 
-修改右侧话题名后，启动文件会同步配置驱动输出、FAST-LIO 输入和输出、监控订阅、局部地图以及 RViz 的订阅重映射。名称须是互不重复的绝对 ROS 话题名，例如 `/robot/odom`。`/map_save` 是固定的存图服务名；`odom`、`base_link`、`imu_link` 和 `lidar` 是 TF frame 名，不在此处修改。使用 `config_file:=/绝对路径/自定义.yaml` 时，自定义文件也须包含完整的 `topics` 段。这里的话题配置只对组合启动生效。
+修改右侧话题名后，启动文件会同步配置驱动输出、FAST-LIO 输入和输出、监控订阅、局部地图以及 RViz 的订阅重映射。名称须是互不重复的绝对 ROS 话题名，例如 `/robot/odom`。`/map_save` 是固定的存图服务名；`odom`、`base_link`、`imu_link` 和 `lidar` 是 TF frame 名，不在此处修改。使用 `config_file:=/绝对路径/自定义.yaml` 时，自定义文件仍需包含原有 `topics` 字段；本次新增的 `gravity`、`local_map_global`、`window_status`、`localization_status` 缺省时使用上述默认名称。这里的话题配置只对组合启动生效。
 
 ### Fast-LIO YAML
 
@@ -210,7 +224,7 @@ mid360_bringup:
 
 ### 网络 JSON
 
-`config/MID360_config.json` 由 Livox 驱动读取，控制网络连接和设备设置，不控制 ROS 话题名或 FAST-LIO 建图参数。本包的默认主机 IP 是 `192.168.1.5`，雷达 IP 是 `192.168.1.106`。
+`config/MID360_config.json` 由 Livox 驱动读取，控制网络连接和设备设置，不控制 ROS 话题名或 FAST-LIO 建图参数。本包的默认主机 IP 是 `192.168.1.5`，雷达 IP 是 `192.168.1.134`。
 
 | JSON 字段 | 当前值 | 作用 |
 |---|---|---|
@@ -218,7 +232,7 @@ mid360_bringup:
 | `MID360.lidar_net_info` | 56100～56500 | 雷达端的命令、推送、点云、IMU 和日志端口 |
 | `MID360.host_net_info.*_ip` | cmd/push/point/imu 均为 `192.168.1.5`；日志 IP 为空 | 主机接收雷达数据的网卡地址 |
 | `MID360.host_net_info.*_port` | 56101～56501 | 主机端对应的 UDP 端口 |
-| `lidar_configs[].ip` | `192.168.1.106` | 实际雷达的 IP 地址 |
+| `lidar_configs[].ip` | `192.168.1.134` | 实际雷达的 IP 地址 |
 | `lidar_configs[].pcl_data_type` / `pattern_mode` | 1 / 0 | 雷达点云数据格式和扫描模式；ROS 输出话题名仍由 YAML 配置 |
 | `lidar_configs[].extrinsic_parameter` | 全部为 0 | 驱动侧外参；本包保持零值，雷达到 IMU 的变换在 YAML 中配置 |
 
@@ -232,13 +246,13 @@ ros2 launch mid360_bringup mid360_mapping.launch.py \
 
 ## 6. 标准运行示例
 
-以下示例使用本机已有的 `livox-mid360` 网口连接，主机 `192.168.1.5/24`、雷达 `192.168.1.106`。
+以下示例使用本机已有的 `livox-mid360` 网口连接，主机 `192.168.1.5/24`、雷达 `192.168.1.134`。
 
 **终端 1：检查网络并启动建图**
 
 ```bash
 sudo nmcli connection up livox-mid360
-ping -c 4 192.168.1.106
+ping -c 4 192.168.1.134
 source /opt/ros/humble/setup.bash
 source /home/jinghao/Fast_lio_ws/install/setup.bash
 export LD_LIBRARY_PATH="/home/jinghao/Fast_lio_ws/external/lib:${LD_LIBRARY_PATH:-}"

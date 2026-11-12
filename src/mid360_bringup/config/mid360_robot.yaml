@@ -56,10 +56,14 @@ mid360_bringup:
             lidar: "/lidar_points"              # MID360 原始点云（Livox CustomMsg），供 FAST-LIO 订阅
             imu: "/imu"                         # MID360 惯性测量数据，供 FAST-LIO 订阅
             odom: "/fast_lio/odom"              # FAST-LIO 估计的里程计位姿
+            gravity: "/fast_lio/gravity"        # FAST-LIO 估计的重力向量，世界坐标系，Vector3Stamped
             local_cloud: "/fast_lio/local_cloud" # 当前帧配准后的点云（世界坐标系）
             body_cloud: "/fast_lio/body_cloud"   # 当前帧点云（机体坐标系）
             effect_cloud: "/fast_lio/effect_cloud" # 有效特征点云；需启用 publish.effect_map_en
             laser_map: "/Laser_map"              # FAST-LIO 从本次运行开始持续累积的已配准点云（按发布周期采样）
             path: "/path"                       # FAST-LIO 累积的运动轨迹
-            local_map: "/fast_lio/local_map"    # 局部地图窗口聚合的点云
+            local_map: "/fast_lio/local_map"    # 自适应局部点云：初始化/恢复用长窗口，定位成功后用短窗口
+            local_map_global: "/fast_lio/local_map_global" # 始终使用长窗口的局部点云
+            window_status: "/fast_lio/window_status" # 局部地图窗口状态，JSON 字符串
+            localization_status: "/localization/status" # 可选 KISS 定位结果输入，用于切换长/短窗口
             health: "/fast_lio/health"          # 点云、IMU、里程计频率及进程健康状态

@@ -60,6 +60,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
+#include <geometry_msgs/msg/vector3_stamped.hpp>
 #include <livox_ros_driver2/msg/custom_msg.hpp>
 #include "preprocess.h"
 #include <ikd-Tree/ikd_Tree.h>
@@ -943,6 +944,7 @@ public:
         pubLaserCloudEffect_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/cloud_effected", 20);
         pubLaserCloudMap_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/Laser_map", 20);
         pubOdomAftMapped_ = this->create_publisher<nav_msgs::msg::Odometry>("/Odometry", 20);
+        pubGravity_ = this->create_publisher<geometry_msgs::msg::Vector3Stamped>("/fast_lio/gravity", 20);
         pubPath_ = this->create_publisher<nav_msgs::msg::Path>("/path", 20);
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -1073,6 +1075,13 @@ private:
 
             /******* Publish odometry *******/
             publish_odometry(pubOdomAftMapped_, tf_broadcaster_);
+            geometry_msgs::msg::Vector3Stamped gravity_msg;
+            gravity_msg.header.stamp = get_ros_time(lidar_end_time);
+            gravity_msg.header.frame_id = world_frame;
+            gravity_msg.vector.x = state_point.grav[0];
+            gravity_msg.vector.y = state_point.grav[1];
+            gravity_msg.vector.z = state_point.grav[2];
+            pubGravity_->publish(gravity_msg);
 
             /*** add the feature points to map kdtree ***/
             t3 = omp_get_wtime();
@@ -1150,6 +1159,7 @@ private:
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloudEffect_;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloudMap_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdomAftMapped_;
+    rclcpp::Publisher<geometry_msgs::msg::Vector3Stamped>::SharedPtr pubGravity_;
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pubPath_;
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_pcl_pc_;
