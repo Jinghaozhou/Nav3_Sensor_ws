@@ -156,7 +156,7 @@ def generate_launch_description():
         'config_file':(str(share/'config/mid360_robot.yaml'),'Absolute or current-directory-relative YAML path'),
         'driver_config':(str(share/'config/MID360_config.json'),'Lidar network JSON path'),
         'rviz_config':(str(share/'rviz/fastlio_map.rviz'),'RViz configuration'),
-        'map_output_dir':(str(Path.home()/'Fast_lio_ws/maps'),'Writable map output directory'),
+        'map_output_dir':(str(Path.home()/'Nav3_Sensor_ws/maps'),'Writable map output directory'),
         'window_time':('120.0','Long local map time window seconds'),
         'tracking_window_time':('30.0','Tracking local map time window seconds'),
         'window_frames':('1500','Maximum retained frame count'),

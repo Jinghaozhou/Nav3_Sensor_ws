@@ -3,7 +3,7 @@
 本工作空间把 Livox MID360 驱动和 FAST-LIO2 放在一起构建、部署：
 
 ```text
-/home/jinghao/Fast_lio_ws
+/home/jinghao/Nav3_Sensor_ws
 ├── src
 │   ├── livox_ros_driver2   # MID360 驱动、CustomMsg 和网络配置
 │   ├── FAST_LIO           # 激光惯性里程计与建图
@@ -19,7 +19,7 @@
 
 | 项目 | 配置 |
 |---|---|
-| 工作空间 | `/home/jinghao/Fast_lio_ws` |
+| 工作空间 | `/home/jinghao/Nav3_Sensor_ws` |
 | ROS 2 | Humble |
 | 有线网卡 | `eno2` |
 | 主机有线 IP | `192.168.1.5/24` |
@@ -54,7 +54,7 @@ humble
 当前 SDK2 已安装到 `external`。检查：
 
 ```bash
-cd /home/jinghao/Fast_lio_ws
+cd /home/jinghao/Nav3_Sensor_ws
 test -f external/lib/liblivox_lidar_sdk_shared.so && echo "SDK2 已就绪"
 ```
 
@@ -70,7 +70,7 @@ cmake --install build/livox_sdk2
 ### 2.3 检查 ikd-Tree
 
 ```bash
-test -f /home/jinghao/Fast_lio_ws/src/FAST_LIO/include/ikd-Tree/ikd_Tree.cpp \
+test -f /home/jinghao/Nav3_Sensor_ws/src/FAST_LIO/include/ikd-Tree/ikd_Tree.cpp \
   && echo "ikd-Tree 已就绪"
 ```
 
@@ -96,7 +96,7 @@ rosdep update --rosdistro humble
 
 ```bash
 source /opt/ros/humble/setup.bash
-cd /home/jinghao/Fast_lio_ws
+cd /home/jinghao/Nav3_Sensor_ws
 rosdep install --from-paths src --ignore-src -r -y --rosdistro humble
 ```
 
@@ -108,7 +108,7 @@ rosdep install --from-paths src --ignore-src -r -y --rosdistro humble
 
 ```bash
 source /opt/ros/humble/setup.bash
-cd /home/jinghao/Fast_lio_ws
+cd /home/jinghao/Nav3_Sensor_ws
 
 CMAKE_BUILD_PARALLEL_LEVEL=4 colcon build \
   --symlink-install \
@@ -122,8 +122,8 @@ CMAKE_BUILD_PARALLEL_LEVEL=4 colcon build \
 
 ```bash
 source /opt/ros/humble/setup.bash
-source /home/jinghao/Fast_lio_ws/install/setup.bash
-export LD_LIBRARY_PATH="/home/jinghao/Fast_lio_ws/external/lib:${LD_LIBRARY_PATH:-}"
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
+export LD_LIBRARY_PATH="/home/jinghao/Nav3_Sensor_ws/external/lib:${LD_LIBRARY_PATH:-}"
 ```
 
 检查三个包是否都来自当前工作空间：
@@ -140,7 +140,7 @@ ros2 pkg executables mid360_bringup
 三个包的 prefix 都应位于：
 
 ```text
-/home/jinghao/Fast_lio_ws/install/
+/home/jinghao/Nav3_Sensor_ws/install/
 ```
 
 如果驱动仍然显示为旧的 `/home/jinghao/livox_ws/install/livox_ros_driver2`，请重新打开终端，只加载 `/opt/ros/humble/setup.bash`，然后重新执行本节构建命令。
@@ -196,8 +196,8 @@ ping -c 4 192.168.1.134
 
 ```bash
 source /opt/ros/humble/setup.bash
-source /home/jinghao/Fast_lio_ws/install/setup.bash
-export LD_LIBRARY_PATH="/home/jinghao/Fast_lio_ws/external/lib:${LD_LIBRARY_PATH:-}"
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
+export LD_LIBRARY_PATH="/home/jinghao/Nav3_Sensor_ws/external/lib:${LD_LIBRARY_PATH:-}"
 
 ros2 launch livox_ros_driver2 msg_MID360_launch.py
 ```
@@ -208,8 +208,8 @@ ros2 launch livox_ros_driver2 msg_MID360_launch.py
 
 ```bash
 source /opt/ros/humble/setup.bash
-source /home/jinghao/Fast_lio_ws/install/setup.bash
-export LD_LIBRARY_PATH="/home/jinghao/Fast_lio_ws/external/lib:${LD_LIBRARY_PATH:-}"
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
+export LD_LIBRARY_PATH="/home/jinghao/Nav3_Sensor_ws/external/lib:${LD_LIBRARY_PATH:-}"
 
 ros2 topic list -t | grep '^/livox/'
 ros2 topic hz /livox/lidar
@@ -229,8 +229,8 @@ ros2 topic hz /livox/imu
 
 ```bash
 source /opt/ros/humble/setup.bash
-source /home/jinghao/Fast_lio_ws/install/setup.bash
-export LD_LIBRARY_PATH="/home/jinghao/Fast_lio_ws/external/lib:${LD_LIBRARY_PATH:-}"
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
+export LD_LIBRARY_PATH="/home/jinghao/Nav3_Sensor_ws/external/lib:${LD_LIBRARY_PATH:-}"
 
 ros2 launch fast_lio mapping.launch.py config_file:=mid360.yaml
 ```
@@ -275,24 +275,24 @@ ros2 topic echo /Odometry --once
 当前 `mid360.yaml` 已启用地图保存。建议先把 `map_file_path` 改成绝对路径，例如：
 
 ```yaml
-map_file_path: "/home/jinghao/Fast_lio_ws/maps/mid360_map.pcd"
+map_file_path: "/home/jinghao/Nav3_Sensor_ws/maps/mid360_map.pcd"
 ```
 
 创建目录：
 
 ```bash
-mkdir -p /home/jinghao/Fast_lio_ws/maps
+mkdir -p /home/jinghao/Nav3_Sensor_ws/maps
 ```
 
 运行 FAST-LIO 后调用：
 
 ```bash
 source /opt/ros/humble/setup.bash
-source /home/jinghao/Fast_lio_ws/install/setup.bash
-export LD_LIBRARY_PATH="/home/jinghao/Fast_lio_ws/external/lib:${LD_LIBRARY_PATH:-}"
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
+export LD_LIBRARY_PATH="/home/jinghao/Nav3_Sensor_ws/external/lib:${LD_LIBRARY_PATH:-}"
 
 ros2 service call /map_save std_srvs/srv/Trigger "{}"
-ls -lh /home/jinghao/Fast_lio_ws/maps/mid360_map.pcd
+ls -lh /home/jinghao/Nav3_Sensor_ws/maps/mid360_map.pcd
 ```
 
 服务返回 `success: true` 表示保存成功。
@@ -309,8 +309,8 @@ ping -c 4 192.168.1.134
 
 ```bash
 source /opt/ros/humble/setup.bash
-source /home/jinghao/Fast_lio_ws/install/setup.bash
-export LD_LIBRARY_PATH="/home/jinghao/Fast_lio_ws/external/lib:${LD_LIBRARY_PATH:-}"
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
+export LD_LIBRARY_PATH="/home/jinghao/Nav3_Sensor_ws/external/lib:${LD_LIBRARY_PATH:-}"
 ros2 launch livox_ros_driver2 msg_MID360_launch.py
 ```
 
@@ -318,8 +318,8 @@ ros2 launch livox_ros_driver2 msg_MID360_launch.py
 
 ```bash
 source /opt/ros/humble/setup.bash
-source /home/jinghao/Fast_lio_ws/install/setup.bash
-export LD_LIBRARY_PATH="/home/jinghao/Fast_lio_ws/external/lib:${LD_LIBRARY_PATH:-}"
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
+export LD_LIBRARY_PATH="/home/jinghao/Nav3_Sensor_ws/external/lib:${LD_LIBRARY_PATH:-}"
 ros2 launch fast_lio mapping.launch.py config_file:=mid360.yaml
 ```
 
@@ -330,7 +330,7 @@ ros2 launch fast_lio mapping.launch.py config_file:=mid360.yaml
 确认三个包都在当前工作空间：
 
 ```bash
-cd /home/jinghao/Fast_lio_ws
+cd /home/jinghao/Nav3_Sensor_ws
 colcon list
 ```
 
@@ -375,7 +375,7 @@ ros2 topic hz /livox/imu
 接好雷达并在终端 1 执行：
 
 ```bash
-cd /home/jinghao/Fast_lio_ws
+cd /home/jinghao/Nav3_Sensor_ws
 sudo nmcli connection up livox-mid360
 ping -c 4 192.168.1.134
 source /opt/ros/humble/setup.bash
@@ -391,7 +391,7 @@ ros2 launch mid360_bringup mid360_mapping.launch.py
 保持终端 1 运行，在新的终端 2 执行：
 
 ```bash
-cd /home/jinghao/Fast_lio_ws
+cd /home/jinghao/Nav3_Sensor_ws
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 export LD_LIBRARY_PATH="$PWD/external/lib:${LD_LIBRARY_PATH:-}"

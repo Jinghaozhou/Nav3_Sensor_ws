@@ -37,7 +37,7 @@ mid360_bringup/
 
 ```bash
 source /opt/ros/humble/setup.bash
-cd /home/jinghao/Fast_lio_ws
+cd /home/jinghao/Nav3_Sensor_ws
 rosdep install --from-paths src --ignore-src -r -y --rosdistro humble
 ```
 
@@ -47,12 +47,12 @@ rosdep install --from-paths src --ignore-src -r -y --rosdistro humble
 
 ```bash
 source /opt/ros/humble/setup.bash
-cd /home/jinghao/Fast_lio_ws
+cd /home/jinghao/Nav3_Sensor_ws
 CMAKE_BUILD_PARALLEL_LEVEL=4 colcon build \
   --symlink-install --packages-select livox_ros_driver2 fast_lio mid360_bringup \
   --executor sequential --cmake-args -DCMAKE_BUILD_TYPE=Release
 source install/setup.bash
-export LD_LIBRARY_PATH="/home/jinghao/Fast_lio_ws/external/lib:${LD_LIBRARY_PATH:-}"
+export LD_LIBRARY_PATH="/home/jinghao/Nav3_Sensor_ws/external/lib:${LD_LIBRARY_PATH:-}"
 ros2 pkg prefix mid360_bringup
 ros2 pkg executables mid360_bringup
 ```
@@ -64,7 +64,7 @@ Python 运行依赖包括 NumPy、SciPy 和 PyYAML，均已在 `package.xml` 声
 默认启动驱动、FAST-LIO、静态 TF、健康监控、局部地图窗口和 RViz：
 
 ```bash
-cd /home/jinghao/Fast_lio_ws
+cd /home/jinghao/Nav3_Sensor_ws
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 export LD_LIBRARY_PATH="$PWD/external/lib:${LD_LIBRARY_PATH:-}"
@@ -74,7 +74,7 @@ ros2 launch mid360_bringup mid360_mapping.launch.py
 无图形界面：
 
 ```bash
-cd /home/jinghao/Fast_lio_ws
+cd /home/jinghao/Nav3_Sensor_ws
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 export LD_LIBRARY_PATH="$PWD/external/lib:${LD_LIBRARY_PATH:-}"
@@ -88,7 +88,7 @@ ros2 launch mid360_bringup mid360_mapping.launch.py rviz:=false
 启动后保持静止 5～10 秒完成 IMU 初始化，再缓慢移动。停止前在另一个终端保存地图：
 
 ```bash
-cd /home/jinghao/Fast_lio_ws
+cd /home/jinghao/Nav3_Sensor_ws
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 export LD_LIBRARY_PATH="$PWD/external/lib:${LD_LIBRARY_PATH:-}"
@@ -165,7 +165,7 @@ ros2 launch mid360_bringup mid360_mapping.launch.py --show-args
 | `config_file` | 包内 mid360_robot.yaml | 建图参数和话题接口配置路径 |
 | `driver_config` | 包内 MID360_config.json | 网络配置路径 |
 | `rviz_config` | 包内 fastlio_map.rviz | RViz 配置路径 |
-| `map_output_dir` | ~/Fast_lio_ws/maps | 可写地图输出目录 |
+| `map_output_dir` | ~/Nav3_Sensor_ws/maps | 可写地图输出目录 |
 | `window_time` | 120.0 | 长窗口时间，秒 |
 | `tracking_window_time` | 30.0 | 定位成功后的短窗口时间，秒 |
 | `window_frames` | 1500 | 最多保留帧数 |
@@ -267,9 +267,9 @@ ros2 launch mid360_bringup mid360_mapping.launch.py \
 
 ```bash
 source /opt/ros/humble/setup.bash
-source /home/jinghao/Fast_lio_ws/install/setup.bash
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
 source "/home/jinghao/wyn/导航工程/kiss_localization_ws1.1/install/setup.bash"
-export LD_LIBRARY_PATH="/home/jinghao/Fast_lio_ws/external/lib:${LD_LIBRARY_PATH:-}"
+export LD_LIBRARY_PATH="/home/jinghao/Nav3_Sensor_ws/external/lib:${LD_LIBRARY_PATH:-}"
 ros2 launch mid360_bringup mid360_mapping.launch.py rviz:=false
 ```
 
@@ -289,10 +289,10 @@ KISS 参考地图和定位算法仍保留在独立的 `kiss_localization_ws1.1`�
 sudo nmcli connection up livox-mid360
 ping -c 4 192.168.1.134
 source /opt/ros/humble/setup.bash
-source /home/jinghao/Fast_lio_ws/install/setup.bash
-export LD_LIBRARY_PATH="/home/jinghao/Fast_lio_ws/external/lib:${LD_LIBRARY_PATH:-}"
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
+export LD_LIBRARY_PATH="/home/jinghao/Nav3_Sensor_ws/external/lib:${LD_LIBRARY_PATH:-}"
 ros2 launch mid360_bringup mid360_mapping.launch.py \
-  map_output_dir:=/home/jinghao/Fast_lio_ws/maps
+  map_output_dir:=/home/jinghao/Nav3_Sensor_ws/maps
 ```
 
 保持静止完成初始化，随后缓慢移动，RViz 中观察地图和轨迹。
@@ -301,7 +301,7 @@ ros2 launch mid360_bringup mid360_mapping.launch.py \
 
 ```bash
 source /opt/ros/humble/setup.bash
-source /home/jinghao/Fast_lio_ws/install/setup.bash
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
 ros2 topic list -t
 ros2 topic echo /fast_lio/odom --once
 ros2 run tf2_ros tf2_echo odom base_link
@@ -315,7 +315,7 @@ ros2 bag record /lidar_points /imu -o /tmp/mid360_scan
 
 ```bash
 source /opt/ros/humble/setup.bash
-source /home/jinghao/Fast_lio_ws/install/setup.bash
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
 ros2 run mid360_bringup save_map
 ```
 

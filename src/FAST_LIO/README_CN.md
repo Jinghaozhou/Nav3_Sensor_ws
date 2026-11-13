@@ -12,7 +12,7 @@
 | ROS 2 | Jazzy，安装于 `/opt/ros/jazzy` |
 | CPU | Intel Core i9-13980HX，24 核 32 线程 |
 | 内存 | 62 GiB |
-| FAST-LIO 工作空间 | `/home/pc/Fast_lio_ws` |
+| FAST-LIO 工作空间 | `/home/jinghao/Nav3_Sensor_ws` |
 | Livox 驱动工作空间 | `/home/pc/livox_ws` |
 | 有线网卡 | `eno2` |
 | 主机有线 IP | `192.168.1.5/24` |
@@ -60,7 +60,7 @@ LiDAR IP: 192.168.1.134
 这个源码副本没有 Git 仓库元数据，不能直接执行 `git submodule update`。当前 `include/ikd-Tree` 是空目录，使用下面的命令补齐：
 
 ```bash
-cd /home/pc/Fast_lio_ws/src/FAST_LIO
+cd /home/jinghao/Nav3_Sensor_ws/src/FAST_LIO
 git clone -b fast_lio https://github.com/hku-mars/ikd-Tree.git include/ikd-Tree
 ```
 
@@ -82,7 +82,7 @@ git clone --recursive https://github.com/Ericsii/FAST_LIO_ROS2.git FAST_LIO
 
 ```bash
 source /opt/ros/jazzy/setup.bash
-cd /home/pc/Fast_lio_ws
+cd /home/jinghao/Nav3_Sensor_ws
 rosdep install --from-paths src --ignore-src -r -y \
   --rosdistro jazzy \
   --skip-keys livox_ros_driver2
@@ -103,7 +103,7 @@ rosdep update
 source /opt/ros/jazzy/setup.bash
 source /home/pc/livox_ws/install/setup.bash
 
-cd /home/pc/Fast_lio_ws
+cd /home/jinghao/Nav3_Sensor_ws
 colcon build \
   --symlink-install \
   --packages-select fast_lio \
@@ -113,19 +113,19 @@ colcon build \
 构建成功后检查：
 
 ```bash
-source /home/pc/Fast_lio_ws/install/setup.bash
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
 ros2 pkg prefix fast_lio
 ros2 pkg executables fast_lio
 ```
 
-预期能够看到 `/home/pc/Fast_lio_ws/install/fast_lio` 和可执行程序 `fastlio_mapping`。
+预期能够看到 `/home/jinghao/Nav3_Sensor_ws/install/fast_lio` 和可执行程序 `fastlio_mapping`。
 
 重新构建时仍然按以下顺序加载环境：
 
 ```bash
 source /opt/ros/jazzy/setup.bash
 source /home/pc/livox_ws/install/setup.bash
-source /home/pc/Fast_lio_ws/install/setup.bash
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
 ```
 
 不要把工作空间加载顺序颠倒：基础 ROS 在前，Livox 驱动其次，FAST-LIO 最后。
@@ -135,7 +135,7 @@ source /home/pc/Fast_lio_ws/install/setup.bash
 FAST-LIO 使用：
 
 ```text
-/home/pc/Fast_lio_ws/src/FAST_LIO/config/mid360.yaml
+/home/jinghao/Nav3_Sensor_ws/src/FAST_LIO/config/mid360.yaml
 ```
 
 关键配置如下：
@@ -177,13 +177,13 @@ mapping:
 建议先创建地图目录：
 
 ```bash
-mkdir -p /home/pc/Fast_lio_ws/maps
+mkdir -p /home/jinghao/Nav3_Sensor_ws/maps
 ```
 
 然后把 `mid360.yaml` 中的保存配置改成绝对路径：
 
 ```yaml
-map_file_path: "/home/pc/Fast_lio_ws/maps/mid360_map.pcd"
+map_file_path: "/home/jinghao/Nav3_Sensor_ws/maps/mid360_map.pcd"
 
 pcd_save:
   pcd_save_en: true
@@ -229,7 +229,7 @@ ros2 topic hz /livox/imu
 ```bash
 source /opt/ros/jazzy/setup.bash
 source /home/pc/livox_ws/install/setup.bash
-source /home/pc/Fast_lio_ws/install/setup.bash
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
 
 ros2 launch fast_lio mapping.launch.py config_file:=mid360.yaml
 ```
@@ -271,16 +271,16 @@ ros2 topic echo /Odometry --once
 ```bash
 source /opt/ros/jazzy/setup.bash
 source /home/pc/livox_ws/install/setup.bash
-source /home/pc/Fast_lio_ws/install/setup.bash
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
 
 ros2 service call /map_save std_srvs/srv/Trigger "{}"
-ls -lh /home/pc/Fast_lio_ws/maps/mid360_map.pcd
+ls -lh /home/jinghao/Nav3_Sensor_ws/maps/mid360_map.pcd
 ```
 
 服务返回 `success: true` 才表示保存成功。可使用下面的命令查看地图：
 
 ```bash
-pcl_viewer /home/pc/Fast_lio_ws/maps/mid360_map.pcd
+pcl_viewer /home/jinghao/Nav3_Sensor_ws/maps/mid360_map.pcd
 ```
 
 ## 10. 常见问题
@@ -290,7 +290,7 @@ pcl_viewer /home/pc/Fast_lio_ws/maps/mid360_map.pcd
 原因是 ikd-Tree 子模块缺失。重新执行第 3 节的克隆命令，并确认下面的文件存在：
 
 ```text
-/home/pc/Fast_lio_ws/src/FAST_LIO/include/ikd-Tree/ikd_Tree.cpp
+/home/jinghao/Nav3_Sensor_ws/src/FAST_LIO/include/ikd-Tree/ikd_Tree.cpp
 ```
 
 ### 找不到 `livox_ros_driver2`
@@ -334,12 +334,12 @@ MID360 使用内置 IMU 时保持 `time_sync_en: false`。只有外部时间同�
 sudo nmcli connection up livox-mid360
 ping -c 4 192.168.1.134
 
-cd /home/pc/Fast_lio_ws/src/FAST_LIO
+cd /home/jinghao/Nav3_Sensor_ws/src/FAST_LIO
 git clone -b fast_lio https://github.com/hku-mars/ikd-Tree.git include/ikd-Tree
 
 source /opt/ros/jazzy/setup.bash
 source /home/pc/livox_ws/install/setup.bash
-cd /home/pc/Fast_lio_ws
+cd /home/jinghao/Nav3_Sensor_ws
 colcon build --symlink-install --packages-select fast_lio --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
 
@@ -354,6 +354,6 @@ ros2 launch livox_ros_driver2 msg_MID360_launch.py
 # 终端 2
 source /opt/ros/jazzy/setup.bash
 source /home/pc/livox_ws/install/setup.bash
-source /home/pc/Fast_lio_ws/install/setup.bash
+source /home/jinghao/Nav3_Sensor_ws/install/setup.bash
 ros2 launch fast_lio mapping.launch.py config_file:=mid360.yaml
 ```

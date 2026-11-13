@@ -22,7 +22,7 @@ command -v pcl_pcd2ply
 在工作空间根目录执行：
 
 ```bash
-cd /home/jinghao/Fast_lio_ws
+cd /home/jinghao/Nav3_Sensor_ws
 pcl_pcd2ply maps/test.pcd maps/test.ply
 ```
 
@@ -41,7 +41,7 @@ ls -lh maps/test.pcd maps/test.ply
 ## 使用 CloudCompare 打开
 
 ```bash
-CloudCompare /home/jinghao/Fast_lio_ws/maps/test.ply
+CloudCompare /home/jinghao/Nav3_Sensor_ws/maps/test.ply
 ```
 
 也可以在 CloudCompare 中通过 `File -> Open` 选择 PLY 文件。
