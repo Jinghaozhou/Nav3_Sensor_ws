@@ -58,10 +58,10 @@ cd /home/jinghao/Nav3_Sensor_ws
 test -f external/lib/liblivox_lidar_sdk_shared.so && echo "SDK2 已就绪"
 ```
 
-需要重新构建 SDK2 时（源码位于 `/home/jinghao/Livox-SDK2`）：
+需要重新构建 SDK2 时（源码位于本工作空间的 `third_party/Livox-SDK2`，复制自 [Livox-SDK2](https://github.com/Livox-SDK/Livox-SDK2) 的 `c0796f0` 提交，许可证见源码目录的 `LICENSE.txt`）：
 
 ```bash
-cmake -S /home/jinghao/Livox-SDK2 -B build/livox_sdk2 \
+cmake -S third_party/Livox-SDK2 -B build/livox_sdk2 \
   -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/external"
 cmake --build build/livox_sdk2 -j 4
 cmake --install build/livox_sdk2
