@@ -137,9 +137,13 @@ def main():
         rclpy.spin(node)
     except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
         pass
-    node.destroy_node()
-    if rclpy.ok():
-        rclpy.shutdown()
+    except RuntimeError:
+        # A queued subscription can race with rclpy shutdown after SIGINT.
+        if rclpy.ok():
+            raise
+    finally:
+        node.destroy_node()
+        rclpy.try_shutdown()
     return 0
 
 
