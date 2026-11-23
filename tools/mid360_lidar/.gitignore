@@ -67,3 +67,9 @@
 # Historical backups remain in the original local repository.
 /integration/
 /reference_maps/archive/
+
+# Reproducible virtual-template build products
+/reference_maps/virtual_*/virtual_scan_renderer
+/reference_maps/virtual_*/render_poses.txt
+/reference_maps/virtual_*/lidar_offset.txt
+/reference_maps/virtual_*/reference_position_coverage.json

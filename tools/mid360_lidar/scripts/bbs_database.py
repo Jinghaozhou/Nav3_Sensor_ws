@@ -14,11 +14,20 @@ from scan_context_descriptor import DEFAULT_CONFIG, encode
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BBS_CONFIG = ROOT/'config/bbs_initialization.json'
 
+def bbs_config_for_region(region):
+    region = str(region)
+    profiles = {'2': DEFAULT_BBS_CONFIG, 'space_2': DEFAULT_BBS_CONFIG,
+                '10': ROOT/'config/bbs_initialization_space_10.json',
+                'space_10': ROOT/'config/bbs_initialization_space_10.json'}
+    if region not in profiles:
+        raise ValueError('BBS model not configured for region: ' + region)
+    return profiles[region]
+
 class BbsDatabase:
     def __init__(self, map_path, config_path=DEFAULT_BBS_CONFIG, output=None):
         self.search_config=json.loads(Path(config_path).read_text()); c=self.search_config
-        if c['schema_version']!=1 or c['region_id']!=2:
-            raise ValueError('Only experimental space_2 BBS profile is supported')
+        if c['schema_version']!=1 or c['region_id'] not in (2,10):
+            raise ValueError('Only configured experimental space_2/space_10 BBS profiles are supported')
         for k in ['timeout_ms','threads','levels','maximum_candidates']:
             if not isinstance(c[k],int) or c[k]<1: raise ValueError('Invalid BBS '+k)
         if not 1<=c['maximum_candidates']<=64 or not 0<c['competition_score_gap']<1 or not 0<c['minimum_occupancy_fraction']<1:
@@ -27,7 +36,7 @@ class BbsDatabase:
         self.library_sha=sha256(self.path/'manifest.json'); self.profile_sha=sha256(config_path)
         self.map_sha=sha256(map_path)
         m=self.manifest
-        if m['map_sha256']!=self.map_sha or m['config_sha256']!=self.profile_sha:
+        if m['region_id']!=c['region_id'] or m['map_sha256']!=self.map_sha or m['config_sha256']!=self.profile_sha:
             raise ValueError('BBS model/map/config mismatch; rebuild model')
         for file,key in [('target.bin','target_sha256'),('worker.cfg','worker_config_sha256')]:
             if sha256(self.path/file)!=m[key]: raise ValueError('BBS model changed: '+file)

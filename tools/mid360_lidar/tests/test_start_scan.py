@@ -39,13 +39,13 @@ while True:time.sleep(.02)
 
 
 class Lifecycle(unittest.TestCase):
-    def exercise(self, mode, scan_mode="building5",auto_update=False):
+    def exercise(self, mode, scan_mode="building5",auto_update=False,region="space_2"):
         with tempfile.TemporaryDirectory(prefix='scan_lifecycle_') as tmp:
             root = Path(tmp); project = root / 'project'; project.mkdir(); (project/'bags').mkdir()
             (project/'config').mkdir();(project/'config/acquisition_profile.json').write_text('{}')
             worker = root/'worker.py'; worker.write_text(WORKER)
             events = root/'events.txt'; session = project/'bags/experiment_test'
-            args = argparse.Namespace(mode=scan_mode, region='entry', bag_root=project/'bags',
+            args = argparse.Namespace(mode=scan_mode, region=region, bag_root=project/'bags',
                                       no_rviz=True, no_render=True,no_auto_library_update=not auto_update,keyframe_library=project/'frozen_library')
             scan = module.ScanSession(args)
             timer = None
@@ -57,8 +57,15 @@ class Lifecycle(unittest.TestCase):
                     role='mapping' if 'mid360_mapping.launch.py' in str(command) else 'localization'; ready=pointer='unused'
                 if role=='localization' and scan_mode=='bbs':
                     self.assertIn('candidate_source:=bbs',command)
+                    if region=='space_10':
+                        self.assertTrue(any('region_initialization_bbs_space_10.yaml' in str(x) for x in command))
+                        self.assertTrue(any('bbs_initialization_space_10.json' in str(x) for x in command))
                     self.assertIn('keyframe_initialization_enabled:=true',command)
                     self.assertNotIn('hierarchical_initialization_enabled:=true',command)
+                if role=='localization' and scan_mode=='virtual':
+                    self.assertIn('candidate_source:=virtual',command)
+                    self.assertIn('hierarchical_initialization_enabled:=true',command)
+                    self.assertTrue(any('region_initialization_bbs_space_10.yaml' in str(x) for x in command))
                 child = REAL_POPEN([sys.executable,str(worker),role,str(events),str(session),ready,pointer,mode],**kwargs)
                 if role=='localization':
                     timer=threading.Timer(.3,scan.request_stop);timer.start()
@@ -98,6 +105,12 @@ class Lifecycle(unittest.TestCase):
 
     def test_bbs_mode_lifecycle_and_candidate_source(self):
         self.exercise('normal',scan_mode='bbs')
+
+    def test_virtual_mode_is_explicit_and_uses_dynamic_space10_profile(self):
+        self.exercise("normal",scan_mode="virtual",region="space_10")
+
+    def test_space10_uses_its_own_model_and_dynamic_profile(self):
+        self.exercise("normal",scan_mode="bbs",region="space_10")
 
     def test_race_mode_and_post_session_admission_order(self):
         self.exercise('normal',scan_mode='race',auto_update=True)

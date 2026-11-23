@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "region_id": 10,
+  "map_sha256": "c84fba59d8c6342aa72c5c53599152295e27948ff0e3317d95fd9f3c12c1ab55",
+  "config_sha256": "51921701283365e1466a38056bad4227f0830e0c0a0b10d6d23b483ed6e7c1a3",
+  "target_sha256": "c2903f241bce4bf361c80ac65a55c8ab9c6eb87a39ae6572f36ed8a922a4e7a6",
+  "worker_config_sha256": "d8f0a43bd847737cd874c387e3e6b13208d8e61201b521d4157475084f69695a",
+  "basis_map_from_gravity": [
+    [
+      0.9999955618352078,
+      0.0,
+      -0.002979313660388836
+    ],
+    [
+      1.1580708595993248e-05,
+      0.9999924454351031,
+      0.003887021817430487
+    ],
+    [
+      0.002979291152970441,
+      -0.0038870390687504273,
+      0.9999880073038395
+    ]
+  ],
+  "lidar_origin_base": [
+    -0.011,
+    -0.02329,
+    0.04412
+  ],
+  "bounds": [
+    [
+      -3.1512733170292355,
+      28.73369262876782,
+      4.960427734800776
+    ],
+    [
+      4.787034121048322,
+      40.29981317029629,
+      12.342391304036699
+    ]
+  ],
+  "target_points": 215846,
+  "calibration_index_sha256": "3d8e00580ed2201cabd558e0eff89bf2c85ba0fc5a00ed953e745c33b4880032",
+  "note": "Reference poses calibrate map gravity only; no reference position/yaw hypotheses are loaded at runtime. Not field accuracy validation."
+}
