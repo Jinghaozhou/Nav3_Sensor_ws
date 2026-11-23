@@ -67,7 +67,8 @@ uint8 line              # laser number in lidar
 
 def _load_livox_msg_texts():
     """优先读 ~/livox_ws 驱动源码里的定义,不存在则用内置副本。"""
-    msg_dir = Path.home() / 'livox_ws/src/livox_ros_driver2/msg'
+    tool_root = Path(__file__).resolve().parents[1]
+    msg_dir = tool_root.parents[1] / 'src/livox_ros_driver2/msg' if tool_root.parent.name == 'tools' else Path.home() / 'livox_ws/src/livox_ros_driver2/msg'
     cm = msg_dir / 'CustomMsg.msg'
     cp = msg_dir / 'CustomPoint.msg'
     if cm.is_file() and cp.is_file():

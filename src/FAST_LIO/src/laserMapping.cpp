@@ -40,6 +40,7 @@
 #include <csignal>
 #include <chrono>
 #include <cmath>
+#include <ctime>
 #include <unistd.h>
 #include <Python.h>
 #include <so3_math.h>
@@ -89,6 +90,7 @@ condition_variable sig_buffer;
 string root_dir = ROOT_DIR;
 string map_file_path, lid_topic, imu_topic;
 string world_frame = "camera_init", body_frame = "body";
+bool map_save_timestamp_suffix = false;
 
 double res_mean_last = 0.05, total_residual = 0.0;
 double last_timestamp_lidar = 0, last_timestamp_imu = -1.0;
@@ -609,12 +611,26 @@ void publish_map(rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub
     // pubLaserCloudMap->publish(laserCloudMap);
 }
 
-void save_to_pcd()
+string save_to_pcd()
 {
+    string output_path = map_file_path;
+    if (map_save_timestamp_suffix) {
+        const auto now = std::chrono::system_clock::now();
+        const auto seconds = std::chrono::system_clock::to_time_t(now);
+        std::tm local{};
+        localtime_r(&seconds, &local);
+        char timestamp[32];
+        std::strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", &local);
+        const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count() % 1000000000;
+        const string suffix = "_" + string(timestamp) + "_" + std::to_string(ns);
+        const auto dot = output_path.rfind(".pcd");
+        output_path.insert(dot == string::npos ? output_path.size() : dot, suffix);
+    }
     pcl::PCDWriter pcd_writer;
     if (pcl_wait_pub->empty()) throw std::runtime_error("Map is empty");
-    if (pcd_writer.writeBinary(map_file_path, *pcl_wait_pub) != 0)
-        throw std::runtime_error("PCD write failed: " + map_file_path);
+    if (pcd_writer.writeBinary(output_path, *pcl_wait_pub) != 0)
+        throw std::runtime_error("PCD write failed: " + output_path);
+    return output_path;
 }
 
 template<typename T>
@@ -813,6 +829,7 @@ public:
         this->declare_parameter<bool>("publish.scan_bodyframe_pub_en", true);
         this->declare_parameter<int>("max_iteration", 4);
         this->declare_parameter<string>("map_file_path", "");
+        map_save_timestamp_suffix = this->declare_parameter<bool>("map_save_timestamp_suffix", false);
         this->declare_parameter<string>("common.lid_topic", "/livox/lidar");
         this->declare_parameter<string>("common.imu_topic", "/livox/imu");
         this->declare_parameter<bool>("common.time_sync_en", false);
@@ -1142,9 +1159,9 @@ private:
         if (pcd_save_en)
         {
             try {
-                save_to_pcd();
+                const auto saved_path = save_to_pcd();
                 res->success = true;
-                res->message = "Map saved to " + map_file_path;
+                res->message = "Map saved to " + saved_path;
             } catch (const std::exception &e) {
                 res->success = false;
                 res->message = e.what();
