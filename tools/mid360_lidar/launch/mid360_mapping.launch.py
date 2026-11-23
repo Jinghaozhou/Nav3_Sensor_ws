@@ -70,9 +70,13 @@ def generate_launch_description():
         package='fast_lio',
         executable='fastlio_mapping',
         parameters=[PathJoinSubstitution([PROJECT_DIR, config_file]),
-                    {'use_sim_time': use_sim_time}],
+                    {'use_sim_time': use_sim_time,
+                     'world_frame': 'odom',
+                     'body_frame': 'base_link'}],
         remappings=[('/livox/lidar', '/lidar_points'),
-                    ('/livox/imu', '/imu')],
+                    ('/livox/imu', '/imu'),
+                    ('/Odometry', '/fast_lio/odom'),
+                    ('/cloud_registered', '/fast_lio/local_cloud')],
         output='screen',
     )
 
