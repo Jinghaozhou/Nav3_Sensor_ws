@@ -1,0 +1,154 @@
+{
+  "source_index_sha256": "de523277d8919ac910e35ae5e3cb403fdf22e1923610810ea0f0f916d88fa52b",
+  "operator_confirmed": {
+    "entry_floor": 1,
+    "space2_exit_floor": 2,
+    "space_3_floor": 2,
+    "space_4_floor": 2,
+    "final_route_floor": 3,
+    "floor_3_excluded_from_library": true,
+    "space_5": "2_to_3"
+  },
+  "frames": {
+    "kf_00000": {
+      "section": "1层入口",
+      "floor": "1",
+      "source": "用户确认起点为1层；帧位于入口"
+    },
+    "kf_00001": {
+      "section": "首段楼梯",
+      "floor": "1_to_2",
+      "source": "用户确认1层至2层；具体梯段按轨迹推断"
+    },
+    "kf_00002": {
+      "section": "首段楼梯",
+      "floor": "1_to_2",
+      "source": "用户确认1层至2层；具体梯段按轨迹推断"
+    },
+    "kf_00003": {
+      "section": "中间平台A",
+      "floor": "1_to_2",
+      "source": "平台几何推断，A为临时名称，不是楼层编号"
+    },
+    "kf_00004": {
+      "section": "中间平台A",
+      "floor": "1_to_2",
+      "source": "平台几何推断，A为临时名称，不是楼层编号"
+    },
+    "kf_00005": {
+      "section": "中间平台A",
+      "floor": "1_to_2",
+      "source": "平台几何推断，A为临时名称，不是楼层编号"
+    },
+    "kf_00006": {
+      "section": "平台A至B之间梯段",
+      "floor": "1_to_2",
+      "source": "轨迹形状推断"
+    },
+    "kf_00007": {
+      "section": "平台A至B之间梯段",
+      "floor": "1_to_2",
+      "source": "轨迹形状推断"
+    },
+    "kf_00008": {
+      "section": "平台A至B之间梯段",
+      "floor": "1_to_2",
+      "source": "轨迹形状推断"
+    },
+    "kf_00009": {
+      "section": "平台A至B之间梯段",
+      "floor": "1_to_2",
+      "source": "轨迹形状推断"
+    },
+    "kf_00010": {
+      "section": "平台A至B之间梯段",
+      "floor": "1_to_2",
+      "source": "轨迹形状推断"
+    },
+    "kf_00011": {
+      "section": "平台A至B之间梯段",
+      "floor": "1_to_2",
+      "source": "轨迹形状推断"
+    },
+    "kf_00012": {
+      "section": "中间平台B",
+      "floor": "1_to_2",
+      "source": "平台几何推断，B为临时名称，不是楼层编号"
+    },
+    "kf_00013": {
+      "section": "中间平台B",
+      "floor": "1_to_2",
+      "source": "平台几何推断，B为临时名称，不是楼层编号"
+    },
+    "kf_00014": {
+      "section": "中间平台B",
+      "floor": "1_to_2",
+      "source": "平台几何推断，B为临时名称，不是楼层编号"
+    },
+    "kf_00015": {
+      "section": "平台B至C之间梯段",
+      "floor": "1_to_2",
+      "source": "轨迹形状推断"
+    },
+    "kf_00016": {
+      "section": "平台B至C之间梯段",
+      "floor": "1_to_2",
+      "source": "轨迹形状推断"
+    },
+    "kf_00017": {
+      "section": "平台B至C之间梯段",
+      "floor": "1_to_2",
+      "source": "轨迹形状推断"
+    },
+    "kf_00018": {
+      "section": "平台B至C之间梯段",
+      "floor": "1_to_2",
+      "source": "轨迹形状推断"
+    },
+    "kf_00019": {
+      "section": "中间平台C",
+      "floor": "1_to_2",
+      "source": "平台几何推断，C为临时名称，不是楼层编号"
+    },
+    "kf_00020": {
+      "section": "中间平台C",
+      "floor": "1_to_2",
+      "source": "平台几何推断，C为临时名称，不是楼层编号"
+    },
+    "kf_00021": {
+      "section": "中间平台C",
+      "floor": "1_to_2",
+      "source": "平台几何推断，C为临时名称，不是楼层编号"
+    },
+    "kf_00022": {
+      "section": "平台C至2层出口梯段",
+      "floor": "1_to_2",
+      "source": "用户确认出口2层；具体梯段按轨迹推断"
+    },
+    "kf_00023": {
+      "section": "平台C至2层出口梯段",
+      "floor": "1_to_2",
+      "source": "用户确认出口2层；具体梯段按轨迹推断"
+    },
+    "kf_00024": {
+      "section": "平台C至2层出口梯段",
+      "floor": "1_to_2",
+      "source": "用户确认出口2层；具体梯段按轨迹推断"
+    },
+    "kf_00025": {
+      "section": "平台C至2层出口梯段",
+      "floor": "1_to_2",
+      "source": "用户确认出口2层；具体梯段按轨迹推断"
+    },
+    "kf_00026": {
+      "section": "2层出口附近",
+      "floor": "2",
+      "source": "用户确认离开space_2时为2层；帧归属由末端平台轨迹推断"
+    },
+    "kf_00027": {
+      "section": "2层出口附近",
+      "floor": "2",
+      "source": "用户确认离开space_2时为2层；帧归属由末端平台轨迹推断"
+    }
+  }
+}

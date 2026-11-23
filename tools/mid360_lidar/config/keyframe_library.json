@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "region": "space_2",
+  "library": "reference_maps/keyframe_libraries/space_2/merged_20261111",
+  "baseline_library": "reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+  "keyframes": 40,
+  "status": "experimental_geometry_checked_independent_field_validation_pending",
+  "note": "原28帧及合并40帧冻结保留；race/keyframes/hierarchical默认读取此活动选择，building5仍为显式15候选。每轮结束可自动生成新版本供下轮使用，独立对照用--no-auto-library-update。",
+  "frozen_library": "reference_maps/keyframe_libraries/space_2/merged_20261111"
+}

@@ -1,0 +1,83 @@
+diff --git a/src/lddc.cpp b/src/lddc.cpp
+index 06195df..9631b2e 100644
+--- a/src/lddc.cpp
++++ b/src/lddc.cpp
+@@ -62,13 +62,14 @@ Lddc::Lddc(int format, int multi_topic, int data_src, int output_type,
+ }
+ #elif defined BUILDING_ROS2
+ Lddc::Lddc(int format, int multi_topic, int data_src, int output_type,
+-           double frq, std::string &frame_id)
++           double frq, std::string &frame_id, const std::string &imu_frame_id)
+     : transfer_format_(format),
+       use_multi_topic_(multi_topic),
+       data_src_(data_src),
+       output_type_(output_type),
+       publish_frq_(frq),
+-      frame_id_(frame_id) {
++      frame_id_(frame_id),
++      imu_frame_id_(imu_frame_id) {
+   publish_period_ns_ = kNsPerSecond / publish_frq_;
+   lds_ = nullptr;
+ #if 0
+@@ -478,7 +479,7 @@ void Lddc::PublishPclData(const uint8_t index, const uint64_t timestamp, const P
+ }
+ 
+ void Lddc::InitImuMsg(const ImuData& imu_data, ImuMsg& imu_msg, uint64_t& timestamp) {
+-  imu_msg.header.frame_id = "livox_frame";
++  imu_msg.header.frame_id.assign(imu_frame_id_);
+ 
+   timestamp = imu_data.time_stamp;
+ #ifdef BUILDING_ROS1
+diff --git a/src/lddc.h b/src/lddc.h
+index 6d146d1..ebc5cb7 100644
+--- a/src/lddc.h
++++ b/src/lddc.h
+@@ -76,7 +76,7 @@ class Lddc final {
+       std::string &frame_id, bool lidar_bag, bool imu_bag);
+ #elif defined BUILDING_ROS2
+   Lddc(int format, int multi_topic, int data_src, int output_type, double frq,
+-      std::string &frame_id);
++      std::string &frame_id, const std::string &imu_frame_id);
+ #endif
+   ~Lddc();
+ 
+@@ -139,6 +139,7 @@ class Lddc final {
+   double publish_frq_;
+   uint32_t publish_period_ns_;
+   std::string frame_id_;
++  std::string imu_frame_id_;
+ 
+ #ifdef BUILDING_ROS1
+   bool enable_lidar_bag_;
+diff --git a/src/livox_ros_driver2.cpp b/src/livox_ros_driver2.cpp
+index 6dda05f..53f3d15 100644
+--- a/src/livox_ros_driver2.cpp
++++ b/src/livox_ros_driver2.cpp
+@@ -134,6 +134,7 @@ DriverNode::DriverNode(const rclcpp::NodeOptions & node_options)
+   this->declare_parameter("publish_freq", 10.0);
+   this->declare_parameter("output_data_type", output_type);
+   this->declare_parameter("frame_id", "frame_default");
++  this->declare_parameter("imu_frame_id", "imu_link");
+   this->declare_parameter("user_config_path", "path_default");
+   this->declare_parameter("cmdline_input_bd_code", "000000000000001");
+   this->declare_parameter("lvx_file_path", "/home/livox/livox_test.lvx");
+@@ -143,7 +144,9 @@ DriverNode::DriverNode(const rclcpp::NodeOptions & node_options)
+   this->get_parameter("data_src", data_src);
+   this->get_parameter("publish_freq", publish_freq);
+   this->get_parameter("output_data_type", output_type);
+-  this->get_parameter("frame_id", frame_id);
++  this->get_parameter("frame_id", frame_id);
++  std::string imu_frame_id;
++  this->get_parameter("imu_frame_id", imu_frame_id);
+ 
+   if (publish_freq > 100.0) {
+     publish_freq = 100.0;
+@@ -156,7 +159,7 @@ DriverNode::DriverNode(const rclcpp::NodeOptions & node_options)
+   future_ = exit_signal_.get_future();
+ 
+   /** Lidar data distribute control and lidar data source set */
+-  lddc_ptr_ = std::make_unique<Lddc>(xfer_format, multi_topic, data_src, output_type, publish_freq, frame_id);
++  lddc_ptr_ = std::make_unique<Lddc>(xfer_format, multi_topic, data_src, output_type, publish_freq, frame_id, imu_frame_id);
+   lddc_ptr_->SetRosNode(this);
+ 
+   if (data_src == kSourceRawLidar) {

@@ -1,0 +1,253 @@
+{
+  "rules": {
+    "max_position_m": 0.35,
+    "max_rotation_deg": 15,
+    "max_descriptor_distance": 0.05
+  },
+  "frames": [
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00000",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00001",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00002",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00003",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00004",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00005",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00006",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00007",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00008",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00009",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00010",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00011",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00012",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00013",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00014",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00015",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00016",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00017",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00018",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00019",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00020",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00021",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00022",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00023",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00024",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00025",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00026",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "source_id": "kf_00027",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/联调记录/20261111_space2关键帧扩充/new_reference_frames",
+      "source_id": "kf_00000",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/联调记录/20261111_space2关键帧扩充/new_reference_frames",
+      "source_id": "kf_00001",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/联调记录/20261111_space2关键帧扩充/new_reference_frames",
+      "source_id": "kf_00002",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/联调记录/20261111_space2关键帧扩充/new_reference_frames",
+      "source_id": "kf_00003",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/联调记录/20261111_space2关键帧扩充/new_reference_frames",
+      "source_id": "kf_00004",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/联调记录/20261111_space2关键帧扩充/new_reference_frames",
+      "source_id": "kf_00005",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/联调记录/20261111_space2关键帧扩充/new_reference_frames",
+      "source_id": "kf_00006",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/联调记录/20261111_space2关键帧扩充/new_reference_frames",
+      "source_id": "kf_00007",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/联调记录/20261111_space2关键帧扩充/new_reference_frames",
+      "source_id": "kf_00008",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/联调记录/20261111_space2关键帧扩充/new_reference_frames",
+      "source_id": "kf_00009",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/联调记录/20261111_space2关键帧扩充/new_reference_frames",
+      "source_id": "kf_00010",
+      "included": true,
+      "duplicate": null
+    },
+    {
+      "source_library": "/home/pc/人形/联调记录/20261111_space2关键帧扩充/new_reference_frames",
+      "source_id": "kf_00011",
+      "included": true,
+      "duplicate": null
+    }
+  ],
+  "base_count": 28,
+  "addition_count": 12,
+  "merged_count": 40,
+  "retained_new": 12
+}

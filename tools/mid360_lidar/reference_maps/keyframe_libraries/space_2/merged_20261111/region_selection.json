@@ -1,0 +1,73 @@
+{
+  "sources": [
+    {
+      "source_library": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "selection": {
+        "map_sha256": "c84fba59d8c6342aa72c5c53599152295e27948ff0e3317d95fd9f3c12c1ab55",
+        "method": "conservative nearest-labelled-surface support + region2 hull; not exact free-space segmentation or surveyed truth",
+        "space2_bounds": [
+          [
+            3.366913080215454,
+            -1.5787652730941772,
+            -0.09251531213521957
+          ],
+          [
+            7.930707931518555,
+            6.474874019622803,
+            8.64104175567627
+          ]
+        ],
+        "rule": {
+          "vote128_min": 0.9,
+          "nearest_other_clearance_m": 0.15,
+          "hull_tolerance_m": 0.35
+        },
+        "source_session": "/home/pc/人形/导航工程/mid360_lidar/bags/experiment_20261109_170630_971075",
+        "source_region": 2,
+        "excluded_from_ns": 1794215284735008956,
+        "boundary_uncertain_from_ns": 1794215285735008955,
+        "guard_seconds": 1.0,
+        "selected_start_ns": 1794215215634773588,
+        "selected_end_ns": 1794215284735008955,
+        "cloud_origin_ns": 1794215192934686899,
+        "start_offset": 22.700086689,
+        "end_offset": 91.800322056,
+        "raw_data_unchanged": true
+      }
+    },
+    {
+      "source_library": "/home/pc/人形/联调记录/20261111_space2关键帧扩充/new_reference_frames",
+      "selection": {
+        "source_session": "/home/pc/人形/导航工程/mid360_lidar/bags/experiment_20261110_113555_164819",
+        "source_first_cloud_ns": 1794281757058347225,
+        "selected_start_ns": 1794281822858927965,
+        "selected_end_ns": 1794281855658997297,
+        "start_offset": 65.80058074,
+        "end_offset": 98.600650072,
+        "first_unsupported": {
+          "stamp_ns": 1794281856658997297,
+          "offset": 99.600650072,
+          "x": 4.377823576467585,
+          "y": 5.3983436127663,
+          "z": 5.833846958278252,
+          "vote128": 0.8984375,
+          "other_clearance_m": 0.15892205466181036,
+          "hull_excess_m": -0.4915088697082348,
+          "space2_supported": false
+        },
+        "rule": {
+          "vote128_min": 0.9,
+          "nearest_other_clearance_m": 0.15,
+          "hull_tolerance_m": 0.35,
+          "exit_guard_s": 1
+        },
+        "pose_source": "most recent already completed applied localization plus same-stamp odometry; no future-label backfill",
+        "not_surveyed_ground_truth": true,
+        "gravity_messages": 1878,
+        "odom_messages": 1878,
+        "accepted": 66,
+        "map_points": 954284
+      }
+    }
+  ]
+}

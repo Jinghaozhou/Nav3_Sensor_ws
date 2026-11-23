@@ -1,0 +1,32 @@
+{
+  "map_sha256": "c84fba59d8c6342aa72c5c53599152295e27948ff0e3317d95fd9f3c12c1ab55",
+  "method": "conservative nearest-labelled-surface support + region2 hull; not exact free-space segmentation or surveyed truth",
+  "space2_bounds": [
+    [
+      3.366913080215454,
+      -1.5787652730941772,
+      -0.09251531213521957
+    ],
+    [
+      7.930707931518555,
+      6.474874019622803,
+      8.64104175567627
+    ]
+  ],
+  "rule": {
+    "vote128_min": 0.9,
+    "nearest_other_clearance_m": 0.15,
+    "hull_tolerance_m": 0.35
+  },
+  "source_session": "/home/pc/人形/导航工程/mid360_lidar/bags/experiment_20261109_170630_971075",
+  "source_region": 2,
+  "excluded_from_ns": 1794215284735008956,
+  "boundary_uncertain_from_ns": 1794215285735008955,
+  "guard_seconds": 1.0,
+  "selected_start_ns": 1794215215634773588,
+  "selected_end_ns": 1794215284735008955,
+  "cloud_origin_ns": 1794215192934686899,
+  "start_offset": 22.700086689,
+  "end_offset": 91.800322056,
+  "raw_data_unchanged": true
+}

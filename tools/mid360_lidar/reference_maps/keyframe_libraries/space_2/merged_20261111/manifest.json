@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "state": "geometry_checked_descriptors_ready",
+  "region_claim": "space_2",
+  "location_note": "space_2：原11月9日28帧与11月10日经筛选的新视角合并；位置非测量真值",
+  "device": "MID360_192.168.1.134_serial_unconfirmed",
+  "map_sha256": "c84fba59d8c6342aa72c5c53599152295e27948ff0e3317d95fd9f3c12c1ab55",
+  "map_path": "/home/pc/人形/导航工程/kiss_localization_ws1.1/src/localization/maps/building_split_space.pcd",
+  "created": "2026-11-11T09:24:08.520466+08:00",
+  "pose_status": "operator_route_confirmed_and_fixed_pose_geometry_checked_not_ground_truth",
+  "cloud_frame": "base_link_at_end_stamp",
+  "gravity_aligned": false,
+  "descriptor_built": true,
+  "online_enabled": false,
+  "keyframes": 40,
+  "index_sha256": "3d8e00580ed2201cabd558e0eff89bf2c85ba0fc5a00ed953e745c33b4880032",
+  "region_selection_file": "region_selection.json",
+  "region_selection_sha256": "948e917ba286ed46a47ff577e82875794b05d7e2fc2422bc69fdeec9f4e297cf",
+  "region_screening": "conservative_map_label_support_and_pre_exit_prefix; not exact free-space boundary",
+  "operator_session_pose_floor_confirmed": true,
+  "per_frame_floor_review_pending": true,
+  "region_exit_boundary_excluded": true,
+  "descriptor_directory": "descriptors_v1",
+  "descriptor_profile_sha256": "759ba37f78e7d9afc1657f89e45c7790a0a7089e708e029e8fa3687f2536989c",
+  "canonical_gravity_aligned": true,
+  "original_clouds_gravity_aligned": false,
+  "floor_annotation_scope": "operator-confirmed endpoint floors; inferred intermediate platforms A/B/C are not floor numbers",
+  "region_floor_semantics": {
+    "space_2": "1_to_2",
+    "space_3": 2,
+    "space_4": 2,
+    "space_5": "2_to_3"
+  },
+  "source_sessions": [
+    "/home/pc/人形/导航工程/mid360_lidar/bags/experiment_20261109_170630_971075",
+    "/home/pc/人形/导航工程/mid360_lidar/bags/experiment_20261110_113555_164819"
+  ],
+  "source_libraries": [
+    {
+      "path": "/home/pc/人形/导航工程/mid360_lidar/reference_maps/keyframe_libraries/space_2/experiment_20261109_170630_971075",
+      "index_sha256": "de523277d8919ac910e35ae5e3cb403fdf22e1923610810ea0f0f916d88fa52b",
+      "manifest_sha256": "7b449a4b298de197690ddabeaa7335fb81c5ec45911770474d6a8ce94d0f8b95"
+    },
+    {
+      "path": "/home/pc/人形/联调记录/20261111_space2关键帧扩充/new_reference_frames",
+      "index_sha256": "3d509a0eafdbbf779b93316af7fc9c9efb78fafbb0ac67276aec76cc9d279284",
+      "manifest_sha256": "a8ecd4adf0497cb1970c041c13e25e6682ca5bb367c7ea3e11a6a984ce1c7fba"
+    }
+  ],
+  "provenance_file": "frame_provenance.json"
+}

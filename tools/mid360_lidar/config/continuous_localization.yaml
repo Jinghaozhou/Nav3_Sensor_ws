@@ -1,0 +1,37 @@
+/**:
+  ros__parameters:
+    map_frame: map
+    odom_frame: odom
+    base_frame: base_link
+    local_map_topic: /local_map
+    local_map_reliability: best_effort
+    voxel_resolution: 0.1
+    max_local_map_age_sec: 10.0
+    # Completion-to-next-start cooldown; auto scheduler polls every 100ms.
+    retry_interval_sec: 1.0
+    periodic_interval_sec: 1.0
+    max_auto_translation_m: 1.0
+    max_auto_rotation_deg: 15.0
+    candidate_timeout_sec: 60.0
+    verbose: true
+    vgicp_threads: 4
+    vgicp_neighbors: 20
+    vgicp_max_correspondence_scale: 3.0
+    min_overlap_percent: 60.0
+    use_prior_tracking: true
+    prior_crop_margin_m: 5.0
+    prior_max_age_sec: 30.0
+    global_local_map_topic: /fast_lio/local_map_global
+    # Optional regional multistart initializer; launch argument enables it.
+    initialization_confirm_windows: 2
+    initialization_confirm_min_dt_sec: 1.0
+    initialization_confirm_timeout_sec: 30.0
+    initialization_consistency_translation_m: 0.5
+    initialization_consistency_rotation_deg: 5.0
+    seed_max_translation_correction_m: 1.0
+    seed_max_rotation_correction_deg: 30.0
+    candidate_cluster_translation_m: 0.5
+    candidate_cluster_rotation_deg: 10.0
+    ambiguity_overlap_gap_percent: 5.0
+    initialization_min_fine_inliers: 20
+    initialization_max_inlier_rmse_m: 0.2
