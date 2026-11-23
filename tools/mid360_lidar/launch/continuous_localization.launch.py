@@ -80,18 +80,31 @@ def save_run_metadata(context):
             bbs_config=Path(LaunchConfiguration('bbs_config').perform(context)).expanduser().resolve()
             database=BbsDatabase(map_file,bbs_config)
             database.close()
+            from prepare_race_map_cache import ensure_cache
+            actions.append(SetLaunchConfiguration('map_cache_directory',str(ensure_cache(map_file))))
             metadata.update(bbs_experimental=True,bbs_config=str(bbs_config),bbs_model=str(database.path),
                 bbs_maximum_candidates=database.search_config['maximum_candidates'],
                 bbs_min_initial_overlap_percent=database.search_config['minimum_initial_overlap_percent'])
             shutil.copy2(bbs_config,folder/'bbs_initialization.json')
             shutil.copy2(database.path/'manifest.json',folder/'bbs_model_manifest.json')
             actions.append(SetLaunchConfiguration('hierarchical_min_initial_overlap',str(database.search_config['minimum_initial_overlap_percent'])))
+        elif metadata['candidate_source']=='virtual':
+            from virtual_database import VirtualDatabase
+            from prepare_race_map_cache import ensure_cache
+            virtual_config=Path(LaunchConfiguration('virtual_config').perform(context)).expanduser().resolve()
+            database=VirtualDatabase(map_file,virtual_config)
+            actions.append(SetLaunchConfiguration('map_cache_directory',str(ensure_cache(map_file))))
+            shutil.copy2(virtual_config,folder/'virtual_initialization.json')
+            shutil.copy2(database.path/'manifest.json',folder/'virtual_manifest.json')
+            metadata.update(virtual_templates=True,virtual_template_count=len(database.templates),virtual_station_count=database.manifest['stations'],virtual_shortlist_budget=len(database.index),reference_source='virtual_not_measured_keyframes')
+            actions.append(SetLaunchConfiguration('hierarchical_min_initial_overlap','80.0'))
         else:
             database=KeyframeDatabase(library,map_file)
         validate_sensor_config(ROOT/'mid360_robot.yaml',database)
         if LaunchConfiguration('initial_region').perform(context) not in (str(database.region_id),f'space_{database.region_id}'):
             raise RuntimeError('Keyframe trial initial_region must name the library region')
         metadata.update(hierarchical_min_initial_overlap=float(LaunchConfiguration('hierarchical_min_initial_overlap').perform(context)),hierarchical_initialization_enabled=LaunchConfiguration('hierarchical_initialization_enabled').perform(context).lower()=='true',keyframe_trial_unvalidated=True,keyframe_initialization_enabled=True,keyframe_library=str(database.path),keyframe_index_sha256=database.library_sha,keyframe_profile_sha256=database.profile_sha,keyframe_count=len(database.index))
+        if metadata['candidate_source']=='virtual': metadata['hierarchical_min_initial_overlap']=80.0
         if metadata['candidate_source']=='bbs': metadata['hierarchical_min_initial_overlap']=database.search_config['minimum_initial_overlap_percent']
         # Metadata was created above with x; update only this newly created run file.
         path.write_text(json.dumps(metadata,ensure_ascii=False,indent=2)+'\n')
@@ -107,6 +120,7 @@ def generate_launch_description():
     recorder=Path(get_package_share_directory('localization_path_recorder'))
     args=[DeclareLaunchArgument('map_cache_directory',default_value=''),DeclareLaunchArgument('race_bbs_profile_sha256',default_value=''),DeclareLaunchArgument('external_initialization_enabled',default_value='false'),DeclareLaunchArgument('race_bbs_sha256',default_value=''),DeclareLaunchArgument('race_keyframes_sha256',default_value=''),DeclareLaunchArgument('race_profile_sha256',default_value=''),DeclareLaunchArgument('visualizer_local_topic',default_value='/fast_lio/local_map'),
           DeclareLaunchArgument('candidate_source',default_value='keyframes'),
+          DeclareLaunchArgument('virtual_config',default_value=str(ROOT/'config/virtual_initialization_space_10.json')),
           DeclareLaunchArgument('bbs_config',default_value=str(ROOT/'config/bbs_initialization.json')),
           DeclareLaunchArgument('hierarchical_min_initial_overlap',default_value='80.0'),
           DeclareLaunchArgument('hierarchical_initialization_enabled',default_value='false'),
@@ -166,6 +180,11 @@ def generate_launch_description():
         '--output',LaunchConfiguration('output'),'--ros-args','-p',['use_sim_time:=',LaunchConfiguration('use_sim_time')]],
         condition=IfCondition(PythonExpression(["'",LaunchConfiguration('keyframe_initialization_enabled'),"'.lower() == 'true' and '",LaunchConfiguration('candidate_source'),"' == 'bbs'"])),output='screen',
         on_exit=[EmitEvent(event=Shutdown(reason='BBS retriever exited'))])
+    virtual_retriever=ExecuteProcess(cmd=['/usr/bin/python3',str(ROOT/'scripts/virtual_retriever.py'),
+        '--config',LaunchConfiguration('virtual_config'),'--map',LaunchConfiguration('map_pcd'),
+        '--output',LaunchConfiguration('output'),'--ros-args','-p',['use_sim_time:=',LaunchConfiguration('use_sim_time')]],
+        condition=IfCondition(PythonExpression(["'",LaunchConfiguration('keyframe_initialization_enabled'),"'.lower() == 'true' and '",LaunchConfiguration('candidate_source'),"' == 'virtual'"])),output='screen',
+        on_exit=[EmitEvent(event=Shutdown(reason='virtual retriever exited'))])
     return LaunchDescription(args+[OpaqueFunction(function=save_run_metadata),
                                    SetParameter(name='use_sim_time', value=LaunchConfiguration('use_sim_time')),
-                                   retriever,bbs_retriever,localizer,visualizer,tf_path,canvas_tf,trace])
+                                   retriever,bbs_retriever,virtual_retriever,localizer,visualizer,tf_path,canvas_tf,trace])

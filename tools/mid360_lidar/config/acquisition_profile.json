@@ -3,8 +3,8 @@
   "platform": "go2_air",
   "reported_sensor_height_m": 0.5,
   "reported_tilt_degrees": 20,
-  "tilt_direction": "unconfirmed",
+  "tilt_direction": "forward_down",
   "calibrated": false,
   "base_frame_meaning": "Fast-LIO IMU body; not calibrated Go2 chassis frame",
-  "source": "operator report 2026-11-19; geometry values are metadata only"
+  "source": "operator confirmation 2026-11-23: Go2 AIR, approximately 0.5m sensor height, 20deg forward-down; not calibrated chassis extrinsics"
 }

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "region_id": 10,
+  "model": "reference_maps/bbs_space_10",
+  "voxel_m": 0.25,
+  "levels": 5,
+  "threads": 4,
+  "timeout_ms": 3000,
+  "minimum_occupancy_fraction": 0.5,
+  "competition_score_gap": 0.05,
+  "peak_translation_m": 0.5,
+  "peak_rotation_deg": 10.0,
+  "maximum_candidates": 8,
+  "minimum_initial_overlap_percent": 80.0,
+  "note": "Experimental space_10 whole-region map search; no fixed entrance seeds or measured keyframe position/yaw prior. Go2 0.5m/20deg is metadata, not calibrated chassis extrinsics. Field arbitrary-start validation pending."
+}

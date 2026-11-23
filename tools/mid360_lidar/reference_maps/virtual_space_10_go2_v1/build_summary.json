@@ -1,0 +1,171 @@
+{
+  "region": 10,
+  "stations": 46,
+  "poses": 368,
+  "height_m": [
+    0.5
+  ],
+  "map_sha256": "c84fba59d8c6342aa72c5c53599152295e27948ff0e3317d95fd9f3c12c1ab55",
+  "map_cache_sha256": "717e8b3add3efe49140368648c789c10704eda26d262fd7d2e4b2621ae72e99e",
+  "source_map_cache": "/home/pc/人形/联调记录/20261111_space2关键帧扩充/map_sample.npz",
+  "source_reference_index_sha256": "3d8e00580ed2201cabd558e0eff89bf2c85ba0fc5a00ed953e745c33b4880032",
+  "calibration_only_reference_positions_not_used_for_sampling": true,
+  "gravity_up_map": [
+    -0.002979313660388836,
+    0.003887021817430487,
+    0.9999880073038395
+  ],
+  "reference_gravity_spread_max_deg": 1.1920444249082658,
+  "basis_map_from_gravity": [
+    [
+      0.9999955618352078,
+      0.0,
+      -0.002979313660388836
+    ],
+    [
+      1.1580708595993248e-05,
+      0.9999924454351031,
+      0.003887021817430487
+    ],
+    [
+      0.002979291152970441,
+      -0.0038870390687504273,
+      0.9999880073038395
+    ]
+  ],
+  "assumed_up_base": [
+    -0.3420201432984737,
+    0.0,
+    0.9396926207958065
+  ],
+  "sensor_offset_base": [
+    -0.011,
+    -0.02329,
+    0.04412
+  ],
+  "profile": {
+    "range_m": 5,
+    "blind_m": 0.5,
+    "map_occupancy_voxel_m": 0.1,
+    "azimuth_step_deg": 1.0,
+    "elevation_step_deg": 1.5,
+    "vertical_FOV_deg": [
+      -7,
+      52
+    ],
+    "horizontal_FOV_deg": [
+      0,
+      360
+    ],
+    "beam_pattern": "uniform angular experimental rays, NOT exact Livox nonrepetitive beam or motion simulation"
+  },
+  "all_stations_review_pending": true,
+  "online_enabled": false,
+  "go2_mounting_not_calibrated": true,
+  "mounting_profile_source": "explicit base-frame up direction",
+  "usable_virtual_templates": 348,
+  "skipped": [
+    {
+      "id": "virtual_00176",
+      "reason": "Too few canonical points",
+      "raw_points": 5074
+    },
+    {
+      "id": "virtual_00180",
+      "reason": "Too few canonical points",
+      "raw_points": 6030
+    },
+    {
+      "id": "virtual_00181",
+      "reason": "Too few canonical points",
+      "raw_points": 5286
+    },
+    {
+      "id": "virtual_00182",
+      "reason": "Too few canonical points",
+      "raw_points": 5158
+    },
+    {
+      "id": "virtual_00257",
+      "reason": "Too few canonical points",
+      "raw_points": 4320
+    },
+    {
+      "id": "virtual_00258",
+      "reason": "Too few canonical points",
+      "raw_points": 3419
+    },
+    {
+      "id": "virtual_00259",
+      "reason": "Too few canonical points",
+      "raw_points": 2809
+    },
+    {
+      "id": "virtual_00260",
+      "reason": "Too few canonical points",
+      "raw_points": 2595
+    },
+    {
+      "id": "virtual_00261",
+      "reason": "Too few canonical points",
+      "raw_points": 3096
+    },
+    {
+      "id": "virtual_00262",
+      "reason": "Too few canonical points",
+      "raw_points": 3814
+    },
+    {
+      "id": "virtual_00264",
+      "reason": "Too few canonical points",
+      "raw_points": 6817
+    },
+    {
+      "id": "virtual_00270",
+      "reason": "Too few canonical points",
+      "raw_points": 7046
+    },
+    {
+      "id": "virtual_00282",
+      "reason": "Too few canonical points",
+      "raw_points": 4877
+    },
+    {
+      "id": "virtual_00312",
+      "reason": "Too few canonical points",
+      "raw_points": 3669
+    },
+    {
+      "id": "virtual_00314",
+      "reason": "Too few canonical points",
+      "raw_points": 2949
+    },
+    {
+      "id": "virtual_00315",
+      "reason": "Too few canonical points",
+      "raw_points": 2381
+    },
+    {
+      "id": "virtual_00316",
+      "reason": "Too few canonical points",
+      "raw_points": 2030
+    },
+    {
+      "id": "virtual_00317",
+      "reason": "Too few canonical points",
+      "raw_points": 2472
+    },
+    {
+      "id": "virtual_00318",
+      "reason": "Too few canonical points",
+      "raw_points": 3242
+    },
+    {
+      "id": "virtual_00319",
+      "reason": "Too few canonical points",
+      "raw_points": 3806
+    }
+  ],
+  "descriptor_encode_seconds": 1.6194248480023816,
+  "minimum_points": 1027
+}

@@ -27,6 +27,8 @@ def generate(a):
  # Small-neighbour PCA retains stair/ramp surfaces as well as broad landings.
  d,ix=tree.query(p,k=8,workers=2);v=p[ix];v-=v.mean(1)[:,None,:];cov=np.einsum('nki,nkj->nij',v,v)/8;ev,vec=np.linalg.eigh(cov)
  terrain=(abs(vec[:,2,0])>np.cos(np.deg2rad(50)))&(ev[:,0]<.035**2)&(ev[:,0]/np.maximum(ev.sum(1),1e-12)<.08)&(d[:,-1]<.4)
+ if getattr(a,'support_z_min',None) is not None:
+  terrain &= (p[:,2]>=a.support_z_min)&(p[:,2]<=a.support_z_max)
  support=p[terrain];support_labels=labels[terrain]
  # Select actual local support samples in quantized XY-height bins; do not average
  # different floors into a fictitious middle position.
@@ -81,7 +83,8 @@ def generate(a):
  result.update(usable_virtual_templates=len(index),skipped=skipped,descriptor_encode_seconds=time.perf_counter()-start,minimum_points=min(x['canonical_points'] for x in index));save(out/'build_summary.json',result);print('TEMPLATES_READY',len(index),flush=True)
 
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('--map',type=Path,default=ROOT.parent/'kiss_localization_ws1.1/src/localization/maps/building_split_space.pcd');p.add_argument('--map-cache',type=Path,required=True);p.add_argument('--reference-library',type=Path,default=ROOT/'reference_maps/keyframe_libraries/space_2/merged_20261111');p.add_argument('--output',type=Path,required=True);p.add_argument('--region',type=int,default=2);p.add_argument('--heights',type=float,nargs='+',default=[1.2]);p.add_argument('--spacing',type=float,default=.5);p.add_argument('--yaw-step',type=float,default=45);p.add_argument('--voxel',type=float,default=.1);p.add_argument('--az-step',type=float,default=1.);p.add_argument('--el-step',type=float,default=1.5);p.add_argument('--phase',choices=['stations','all'],default='all');p.add_argument('--up-base',type=float,nargs=3,help='Measured gravity-up in current IMU/base frame; not a LiDAR-IMU extrinsic change');a=p.parse_args()
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--map',type=Path,default=ROOT.parent/'kiss_localization_ws1.1/src/localization/maps/building_split_space.pcd');p.add_argument('--map-cache',type=Path,required=True);p.add_argument('--reference-library',type=Path,default=ROOT/'reference_maps/keyframe_libraries/space_2/merged_20261111');p.add_argument('--output',type=Path,required=True);p.add_argument('--region',type=int,default=2);p.add_argument('--heights',type=float,nargs='+',default=[1.2]);p.add_argument('--spacing',type=float,default=.5);p.add_argument('--yaw-step',type=float,default=45);p.add_argument('--voxel',type=float,default=.1);p.add_argument('--az-step',type=float,default=1.);p.add_argument('--el-step',type=float,default=1.5);p.add_argument('--support-z-min',type=float);p.add_argument('--support-z-max',type=float);p.add_argument('--phase',choices=['stations','all'],default='all');p.add_argument('--up-base',type=float,nargs=3,help='Measured gravity-up in current IMU/base frame; not a LiDAR-IMU extrinsic change');a=p.parse_args()
+ if (a.support_z_min is None)!=(a.support_z_max is None) or (a.support_z_min is not None and (not np.isfinite([a.support_z_min,a.support_z_max]).all() or a.support_z_min>a.support_z_max)):p.error('Finite paired support height bounds required')
  values=a.heights+[a.spacing,a.yaw_step,a.voxel,a.az_step,a.el_step]
  if any(not np.isfinite(x) or x<=0 for x in values):p.error('Finite positive sampling parameters required')
  if a.output.exists() and any(a.output.iterdir()):p.error('Use a new empty output directory; do not overwrite prior experiments')

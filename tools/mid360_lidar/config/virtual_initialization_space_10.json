@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "region_id": 10,
+  "library": "reference_maps/virtual_space_10_go2_v1",
+  "maximum_candidates": 24,
+  "dedup_translation_m": 0.25,
+  "dedup_rotation_deg": 10,
+  "initial_overlap_percent": 80,
+  "source": "virtual_map_raycasts_not_measured_keyframes",
+  "reported_height_m": 0.5,
+  "reported_pitch_down_deg": 20,
+  "operator_reported": true,
+  "extrinsics_calibrated": false
+}
