@@ -1,0 +1,61 @@
+diff --git a/src/preprocess.cpp b/src/preprocess.cpp
+index 88444f4..9736b25 100644
+--- a/src/preprocess.cpp
++++ b/src/preprocess.cpp
+@@ -5,7 +5,7 @@
+ #define RETURN0 0x00
+ #define RETURN0AND1 0x10
+ 
+-Preprocess::Preprocess() : feature_enabled(0), lidar_type(AVIA), blind(0.01), point_filter_num(1)
++Preprocess::Preprocess() : feature_enabled(0), lidar_type(AVIA), blind(0.01), point_filter_num(1), max_range(300.0)
+ {
+   inf_bound = 10;
+   N_SCANS = 6;
+@@ -119,6 +119,11 @@ void Preprocess::avia_handler(const livox_ros_driver2::msg::CustomMsg::UniquePtr
+       if ((msg->points[i].line < N_SCANS) &&
+           ((msg->points[i].tag & 0x30) == 0x10 || (msg->points[i].tag & 0x30) == 0x00))
+       {
++        double dist2 = msg->points[i].x * msg->points[i].x +
++                       msg->points[i].y * msg->points[i].y +
++                       msg->points[i].z * msg->points[i].z;
++        if (dist2 < blind * blind || dist2 > max_range * max_range)
++          continue;
+         pl_full[i].x = msg->points[i].x;
+         pl_full[i].y = msg->points[i].y;
+         pl_full[i].z = msg->points[i].z;
+@@ -180,10 +185,12 @@ void Preprocess::avia_handler(const livox_ros_driver2::msg::CustomMsg::UniquePtr
+           pl_full[i].curvature = msg->points[i].offset_time /
+                                  float(1000000);  // use curvature as time of each laser points, curvature unit: ms
+ 
++          double dist2 = pl_full[i].x * pl_full[i].x + pl_full[i].y * pl_full[i].y + pl_full[i].z * pl_full[i].z;
+           if(((abs(pl_full[i].x - pl_full[i-1].x) > 1e-7)
+               || (abs(pl_full[i].y - pl_full[i-1].y) > 1e-7)
+               || (abs(pl_full[i].z - pl_full[i-1].z) > 1e-7))
+-              && (pl_full[i].x * pl_full[i].x + pl_full[i].y * pl_full[i].y + pl_full[i].z * pl_full[i].z > (blind * blind)))
++              && (dist2 > (blind * blind))
++              && (dist2 < (max_range * max_range)))
+           {
+             pl_surf.push_back(pl_full[i]);
+           }
+diff --git a/src/preprocess.h b/src/preprocess.h
+index 7f7d7a1..a51b255 100644
+--- a/src/preprocess.h
++++ b/src/preprocess.h
+@@ -169,6 +169,7 @@ class Preprocess
+   float time_unit_scale;
+   int lidar_type, point_filter_num, N_SCANS, SCAN_RATE, time_unit;
+   double blind;
++  double max_range;  // 最大测距过滤(由 mapping.det_range 注入,见 laserMapping.cpp)
+   bool feature_enabled, given_offset_time;
+   // ros::Publisher pub_full, pub_surf, pub_corn;
+ 
+diff --git a/src/laserMapping.cpp b/src/laserMapping.cpp
+index d441261..7305f64 100644
+@@ -851,6 +863,7 @@ public:
+         this->get_parameter_or<double>("filter_size_map",filter_size_map_min,0.5);
+         this->get_parameter_or<double>("cube_side_length",cube_len,200.f);
+         this->get_parameter_or<float>("mapping.det_range",DET_RANGE,300.f);
++        p_pre->max_range = DET_RANGE;   // det_range 注入 preprocess 做远距过滤(原版语义)
+         this->get_parameter_or<double>("mapping.fov_degree",fov_deg,180.f);
+         this->get_parameter_or<double>("mapping.gyr_cov",gyr_cov,0.1);
+         this->get_parameter_or<double>("mapping.acc_cov",acc_cov,0.1);

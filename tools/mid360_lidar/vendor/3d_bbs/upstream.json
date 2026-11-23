@@ -1,0 +1,51 @@
+{
+  "repository": "https://github.com/KOKIAOKI/3d_bbs",
+  "commit": "41529a34a2fb9618b5ff560fb3c2363f1615666d",
+  "files": [
+    {
+      "path": "CMakeLists.txt",
+      "url": "https://raw.githubusercontent.com/KOKIAOKI/3d_bbs/41529a34a2fb9618b5ff560fb3c2363f1615666d/CMakeLists.txt",
+      "sha256": "41cb9c6017c61fe9e655ed155a2a0a6a589a4c12a6f7100878c8b68633678fba"
+    },
+    {
+      "path": "LICENSE",
+      "url": "https://raw.githubusercontent.com/KOKIAOKI/3d_bbs/41529a34a2fb9618b5ff560fb3c2363f1615666d/LICENSE",
+      "sha256": "5e3b8576133b5b6dac76320b7853ecb350a52263ce54c10bbf1a78a678debee0"
+    },
+    {
+      "path": "README.md",
+      "url": "https://raw.githubusercontent.com/KOKIAOKI/3d_bbs/41529a34a2fb9618b5ff560fb3c2363f1615666d/README.md",
+      "sha256": "d6991d935598c36d87a8e478edd34028edaf1c7e735f98f965b97798b2003ff1"
+    },
+    {
+      "path": "bbs3d/include/cpu_bbs3d/bbs3d.hpp",
+      "url": "https://raw.githubusercontent.com/KOKIAOKI/3d_bbs/41529a34a2fb9618b5ff560fb3c2363f1615666d/bbs3d/include/cpu_bbs3d/bbs3d.hpp",
+      "sha256": "3a8527664b2660eacc67f1c53883f086b1c4cb6f5e8b4e4d7570c22ec6fb7ddc"
+    },
+    {
+      "path": "bbs3d/include/cpu_bbs3d/voxelmaps.hpp",
+      "url": "https://raw.githubusercontent.com/KOKIAOKI/3d_bbs/41529a34a2fb9618b5ff560fb3c2363f1615666d/bbs3d/include/cpu_bbs3d/voxelmaps.hpp",
+      "sha256": "707a16b94644e967da92579f43ce3e9ed6ed3f6afda8f2f524e9366da2441f3e"
+    },
+    {
+      "path": "bbs3d/include/discrete_transformation/discrete_transformation.hpp",
+      "url": "https://raw.githubusercontent.com/KOKIAOKI/3d_bbs/41529a34a2fb9618b5ff560fb3c2363f1615666d/bbs3d/include/discrete_transformation/discrete_transformation.hpp",
+      "sha256": "4b80b0afb4b457759f299c9b22627c3307cdc2ed37a75b441a8ad601f64b3b4f"
+    },
+    {
+      "path": "bbs3d/src/cpu_bbs3d/bbs3d.cpp",
+      "url": "https://raw.githubusercontent.com/KOKIAOKI/3d_bbs/41529a34a2fb9618b5ff560fb3c2363f1615666d/bbs3d/src/cpu_bbs3d/bbs3d.cpp",
+      "sha256": "b360f9b7e03e12aeaf9803cd5f7af83db3419393042c81e8f245b0c4f46981fd"
+    },
+    {
+      "path": "bbs3d/src/cpu_bbs3d/voxelmaps.cpp",
+      "url": "https://raw.githubusercontent.com/KOKIAOKI/3d_bbs/41529a34a2fb9618b5ff560fb3c2363f1615666d/bbs3d/src/cpu_bbs3d/voxelmaps.cpp",
+      "sha256": "3130ae15ef80c686ba69fd3b6f8d592059b80047e389459724d7c4d562ac8b3a"
+    },
+    {
+      "path": "bbs3d/src/cpu_bbs3d/voxelmaps_io.cpp",
+      "url": "https://raw.githubusercontent.com/KOKIAOKI/3d_bbs/41529a34a2fb9618b5ff560fb3c2363f1615666d/bbs3d/src/cpu_bbs3d/voxelmaps_io.cpp",
+      "sha256": "88b214201f71c31d8e6d33e6dc1e12334bdc89dd6fbb74d59fd887ac8e87c720"
+    }
+  ]
+}

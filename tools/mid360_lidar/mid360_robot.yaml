@@ -1,0 +1,52 @@
+/**:
+    ros__parameters:
+        feature_extract_enable: false
+        point_filter_num: 2    # 每2点取1(2026-09-29 发散后减压:1→2,剧烈动作时单帧耗时不破100ms预算;地图密度影响小)
+        max_iteration: 3
+        filter_size_surf: 0.2
+        filter_size_map: 0.1
+        cube_side_length: 1000.0
+        runtime_pos_log_enable: true    # FL-11 每帧耗时/点数统计用;mat_out.txt 的外参日志留作路线B备用;统计完成后可关
+        map_file_path: "./slam_output/mid360_map.pcd"   # 存到 slam_output/，自动追加时间戳
+
+        common:
+            # 单独跑 fast_lio(排查)时直接订阅驱动的 /livox/* 话题;
+            # 一键 launch(mid360_mapping.launch.py)会把 fast_lio 的这两个
+            # 订阅重映射到设计文档话题 /lidar_points + /imu
+            lid_topic:  "/livox/lidar"
+            imu_topic:  "/livox/imu"
+            time_sync_en: false
+            time_offset_lidar_to_imu: 0.0
+
+        preprocess:
+            max_range: 5.0  # Nav3 FAST_LIO preprocessing range patch
+            lidar_type: 1                # 1 = Livox CustomMsg
+            scan_line:  4
+            blind: 0.5
+            timestamp_unit: 3
+            scan_rate: 10
+
+        mapping:
+            acc_cov: 0.1
+            gyr_cov: 0.1
+            b_acc_cov: 0.0001
+            b_gyr_cov: 0.0001
+            fov_degree:    360.0
+            det_range:     5.0      # 2026-10-24：按彦男要求缩短至5m；过滤相对雷达的单帧远点，原始驱动话题不裁剪
+            extrinsic_est_en:  false     # 出厂值固化(2026-09-28 路线A,实扫对比验证通过);若未来发现地图系统性变形,走路线B逐台标定(见 README 4.4)
+            extrinsic_T: [ -0.011, -0.02329, 0.04412 ]
+            extrinsic_R: [ 1., 0., 0.,
+                            0., 1., 0.,
+                            0., 0., 1.]
+
+        publish:
+            path_en: true
+            effect_map_en: false
+            map_en: true
+            scan_publish_en:  true
+            dense_publish_en: false
+            scan_bodyframe_pub_en: true
+
+        pcd_save:
+            pcd_save_en: true
+            interval: -1

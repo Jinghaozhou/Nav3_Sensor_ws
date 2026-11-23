@@ -1,0 +1,173 @@
+{
+  "state": "geometry_checked_descriptors_ready",
+  "keyframes": 28,
+  "geometry_passed": 28,
+  "min_map_30cm_fraction": 0.972682359779134,
+  "max_map_inlier_rmse_m": 0.0493692365749105,
+  "profile_sha256": "759ba37f78e7d9afc1657f89e45c7790a0a7089e708e029e8fa3687f2536989c",
+  "map_sha256": "c84fba59d8c6342aa72c5c53599152295e27948ff0e3317d95fd9f3c12c1ab55",
+  "source_index_sha256": "de523277d8919ac910e35ae5e3cb403fdf22e1923610810ea0f0f916d88fa52b",
+  "gravity_track_sha256": "c4ce9d6c491ad5377b890a5c97e1aa2244436110d3ebc1944ff91d6b1b3ced6e",
+  "gravity_provenance": {
+    "source_session": "/home/pc/人形/导航工程/mid360_lidar/bags/experiment_20261109_170630_971075",
+    "method": "matching retained Fast-LIO log state positions with bag odometry, robust relative-time offset; scan-end jitter retained",
+    "columns": 26,
+    "gravity_slice": [
+      22,
+      25
+    ],
+    "paired_motion_samples": 1367,
+    "time_offset_ns": 1794215192533944576,
+    "p95_time_residual_ms": 2.4056433000000004,
+    "max_time_residual_ms": 8.381701,
+    "bag_odom_count": 1854
+  },
+  "annotations_sha256": "b72651cdb7ecafe0aecc6fb49fc4c9edc3539a5990e470394428bcdb227f4d8b",
+  "audit_map_path": "/home/pc/人形/联调记录/20261104_space分区地图接入/targets/full_10cm.pcd",
+  "audit_map_sha256": "193030e12b61753af6d91f769e870d31bd69022e48de1e8a24348701748177ad",
+  "self_checks": [
+    {
+      "id": "kf_00000",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00001",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00002",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00003",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00004",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00005",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00006",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00007",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00008",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00009",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00010",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00011",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00012",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00013",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00014",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00015",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00016",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00017",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00018",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00019",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00020",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00021",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00022",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00023",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00024",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00025",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00026",
+      "distance": 0.0,
+      "right_shift": 0
+    },
+    {
+      "id": "kf_00027",
+      "distance": 0.0,
+      "right_shift": 0
+    }
+  ],
+  "online_enabled": false,
+  "independent_retrieval_test_passed": false,
+  "note": "Map support is fixed-pose nearest-neighbor geometry, NOT VGICP overlap or surveyed accuracy; intermediate platform labels inferred from route shape, endpoint floors provided by operator"
+}

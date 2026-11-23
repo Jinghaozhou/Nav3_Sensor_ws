@@ -1,0 +1,159 @@
+Panels:
+- Class: rviz_common/Displays
+  Name: Displays
+  Property Tree Widget:
+    Expanded:
+    - /Global Options1
+    - /GLOBAL | map1
+    - /LOCAL | raw odom (right)1
+    Splitter Ratio: 0.5
+  Tree Height: 700
+Visualization Manager:
+  Class: ''
+  Displays:
+  - Class: rviz_default_plugins/PointCloud2
+    Enabled: true
+    Name: GLOBAL | map
+    Alpha: 0.85
+    Color: 190; 190; 190
+    Color Transformer: FlatColor
+    Position Transformer: XYZ
+    Style: Points
+    Size (Pixels): 2
+    Size (m): 0.04
+    Decay Time: 0
+    Topic:
+      Depth: 1
+      Durability Policy: Transient Local
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Value: /localization_visualization/comparison/global_map
+    Use Fixed Frame: true
+    Value: true
+  - Class: rviz_default_plugins/PointCloud2
+    Enabled: true
+    Name: LOCAL | raw odom (right)
+    Alpha: 1
+    Color: 255; 125; 50
+    Color Transformer: FlatColor
+    Position Transformer: XYZ
+    Style: Points
+    Size (Pixels): 3
+    Size (m): 0.06
+    Decay Time: 0
+    Topic:
+      Depth: 1
+      Durability Policy: Transient Local
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Value: /localization_visualization/comparison/local_map
+    Use Fixed Frame: true
+    Value: true
+  - Class: rviz_default_plugins/PointCloud2
+    Enabled: true
+    Name: ALIGNED | overlay on global
+    Alpha: 1
+    Color: 30; 210; 245
+    Color Transformer: FlatColor
+    Position Transformer: XYZ
+    Style: Points
+    Size (Pixels): 3
+    Size (m): 0.06
+    Decay Time: 0
+    Topic:
+      Depth: 1
+      Durability Policy: Transient Local
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Value: /localization_visualization/comparison/aligned_local_map
+    Use Fixed Frame: true
+    Value: true
+  - Class: rviz_default_plugins/MarkerArray
+    Enabled: true
+    Name: Labels
+    Topic:
+      Depth: 1
+      Durability Policy: Transient Local
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Value: /localization_visualization/comparison/labels
+    Value: true
+  - Class: rviz_default_plugins/Path
+    Name: ContinuousLocalizedPath
+    Enabled: true
+    Topic:
+      Value: /localization/path
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+      Depth: 1
+      History Policy: Keep Last
+    Color: 0; 200; 255
+    Line Style: Lines
+    Line Width: 0.05
+    Buffer Length: 1
+    Pose Style: None
+    Value: true
+  - Class: rviz_default_plugins/MarkerArray
+    Name: SuccessfulMatches
+    Enabled: true
+    Topic:
+      Value: /localization/match_markers
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+      Depth: 1
+      History Policy: Keep Last
+    Value: true
+  - Class: rviz_default_plugins/Path
+    Name: TFRecordedPath
+    Enabled: true
+    Topic:
+      Value: /localization_visualization/comparison/map_path
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+      Depth: 1
+      History Policy: Keep Last
+    Color: 255; 230; 0
+    Line Style: Lines
+    Line Width: 0.07
+    Buffer Length: 1
+    Pose Style: None
+    Value: true
+  - Class: rviz_default_plugins/Marker
+    Name: CurrentLocalizedPose
+    Enabled: true
+    Topic:
+      Value: /localization_visualization/comparison/current_pose
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+      Depth: 1
+      History Policy: Keep Last
+    Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 20; 20; 25
+    Fixed Frame: map
+    Frame Rate: 30
+  Name: root
+  Tools:
+  - Class: rviz_default_plugins/Interact
+  - Class: rviz_default_plugins/MoveCamera
+  - Class: rviz_default_plugins/Select
+  - Class: rviz_default_plugins/FocusCamera
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 210
+      Focal Point:
+        X: 80
+        Y: 15
+        Z: 5
+      Name: Current View
+      Pitch: 1.55
+      Target Frame: <Fixed Frame>
+      Value: Orbit (rviz_default_plugins)
+      Yaw: 0
+    Saved: null
