@@ -5,13 +5,13 @@ ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 from bbs_database import bbs_config_for_region
 class Regions(unittest.TestCase):
  def test_aliases(self):
-  for n in (2,10):self.assertEqual(bbs_config_for_region(n),bbs_config_for_region(f'space_{n}'))
+  for n in range(1,14):self.assertEqual(bbs_config_for_region(n),bbs_config_for_region(f'space_{n}'))
  def test_independent_models(self):
   a=json.loads(bbs_config_for_region(2).read_text());b=json.loads(bbs_config_for_region(10).read_text())
   self.assertEqual(a['region_id'],2);self.assertEqual(b['region_id'],10);self.assertNotEqual(a['model'],b['model'])
   for k in ('timeout_ms','maximum_candidates','minimum_initial_overlap_percent'):self.assertEqual(a[k],b[k])
  def test_unsupported_regions_rejected(self):
-  for n in ('space_1','space_20','space_100','space_2 space_10'):
+  for n in ('space_0','space_14','space_20','space_100','space_2 space_10'):
    with self.assertRaises(ValueError):bbs_config_for_region(n)
  def test_no_fake_entrance_seeds(self):
   import yaml

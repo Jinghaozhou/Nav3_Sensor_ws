@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "region_id": 3,
+  "model": "reference_maps/bbs_space_3",
+  "voxel_m": 0.25,
+  "levels": 5,
+  "threads": 4,
+  "timeout_ms": 3000,
+  "minimum_occupancy_fraction": 0.5,
+  "competition_score_gap": 0.05,
+  "peak_translation_m": 0.5,
+  "peak_rotation_deg": 10.0,
+  "maximum_candidates": 8,
+  "minimum_initial_overlap_percent": 80.0,
+  "note": "区域地图搜索；保持原质量、时效、歧义和两窗规则，需独立实机核验。"
+}

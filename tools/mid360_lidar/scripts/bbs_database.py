@@ -15,19 +15,15 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BBS_CONFIG = ROOT/'config/bbs_initialization.json'
 
 def bbs_config_for_region(region):
-    region = str(region)
-    profiles = {'2': DEFAULT_BBS_CONFIG, 'space_2': DEFAULT_BBS_CONFIG,
-                '10': ROOT/'config/bbs_initialization_space_10.json',
-                'space_10': ROOT/'config/bbs_initialization_space_10.json'}
-    if region not in profiles:
-        raise ValueError('BBS model not configured for region: ' + region)
-    return profiles[region]
+    from region_profiles import region_number
+    number = region_number(region)
+    return DEFAULT_BBS_CONFIG if number == 2 else ROOT/f'config/bbs_initialization_space_{number}.json'
 
 class BbsDatabase:
     def __init__(self, map_path, config_path=DEFAULT_BBS_CONFIG, output=None):
         self.search_config=json.loads(Path(config_path).read_text()); c=self.search_config
-        if c['schema_version']!=1 or c['region_id'] not in (2,10):
-            raise ValueError('Only configured experimental space_2/space_10 BBS profiles are supported')
+        if c['schema_version']!=1 or c['region_id'] not in range(1,14):
+            raise ValueError('BBS区域编号必须在1至13之间')
         for k in ['timeout_ms','threads','levels','maximum_candidates']:
             if not isinstance(c[k],int) or c[k]<1: raise ValueError('Invalid BBS '+k)
         if not 1<=c['maximum_candidates']<=64 or not 0<c['competition_score_gap']<1 or not 0<c['minimum_occupancy_fraction']<1:

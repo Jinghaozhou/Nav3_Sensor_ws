@@ -1,0 +1,58 @@
+schema_version: 1
+map_frame: map
+base_frame: base_link
+map_sha256: c84fba59d8c6342aa72c5c53599152295e27948ff0e3317d95fd9f3c12c1ab55
+description: 13区动态候选初始化，不使用固定入口锚点；仅用于显式BBS或虚拟模板模式。
+regions:
+- region_id: 1
+  region_name: space_1
+  dynamic_candidates_only: true
+  seeds: []
+- region_id: 2
+  region_name: space_2
+  dynamic_candidates_only: true
+  seeds: []
+- region_id: 3
+  region_name: space_3
+  dynamic_candidates_only: true
+  seeds: []
+- region_id: 4
+  region_name: space_4
+  dynamic_candidates_only: true
+  seeds: []
+- region_id: 5
+  region_name: space_5
+  dynamic_candidates_only: true
+  seeds: []
+- region_id: 6
+  region_name: space_6
+  dynamic_candidates_only: true
+  seeds: []
+- region_id: 7
+  region_name: space_7
+  dynamic_candidates_only: true
+  seeds: []
+- region_id: 8
+  region_name: space_8
+  dynamic_candidates_only: true
+  seeds: []
+- region_id: 9
+  region_name: space_9
+  dynamic_candidates_only: true
+  seeds: []
+- region_id: 10
+  region_name: space_10
+  dynamic_candidates_only: true
+  seeds: []
+- region_id: 11
+  region_name: space_11
+  dynamic_candidates_only: true
+  seeds: []
+- region_id: 12
+  region_name: space_12
+  dynamic_candidates_only: true
+  seeds: []
+- region_id: 13
+  region_name: space_13
+  dynamic_candidates_only: true
+  seeds: []

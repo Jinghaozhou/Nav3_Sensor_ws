@@ -13,6 +13,11 @@ ROOT=Path(__file__).resolve().parents[1]
 
 def save(path,value):path.write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n')
 
+def support_neighborhood(tree,support,foot):
+ # 空间索引替代逐点全表扫描，保留原来的严格距离和高度条件。
+ local=support[tree.query_ball_point(foot[:2],.24)]
+ return local[(np.linalg.norm(local[:,:2]-foot[:2],axis=1)<.24)&(abs(local[:,2]-foot[2])<.11)]
+
 def generate(a):
  out=a.output.absolute();out.mkdir(parents=True,exist_ok=True)
  lib=a.reference_library;manifest=json.loads((lib/'manifest.json').read_text());rows=[json.loads(x) for x in (lib/'keyframes.jsonl').read_text().splitlines()];idx=[json.loads(x) for x in (lib/'descriptors_v1/index.jsonl').read_text().splitlines()]
@@ -29,14 +34,14 @@ def generate(a):
  terrain=(abs(vec[:,2,0])>np.cos(np.deg2rad(50)))&(ev[:,0]<.035**2)&(ev[:,0]/np.maximum(ev.sum(1),1e-12)<.08)&(d[:,-1]<.4)
  if getattr(a,'support_z_min',None) is not None:
   terrain &= (p[:,2]>=a.support_z_min)&(p[:,2]<=a.support_z_max)
- support=p[terrain];support_labels=labels[terrain]
+ support=p[terrain];support_labels=labels[terrain];support_xy_tree=cKDTree(support[:,:2])
  # Select actual local support samples in quantized XY-height bins; do not average
  # different floors into a fictitious middle position.
  keys=np.column_stack([np.floor(support[:,:2]/.22).astype('i8'),np.floor(support[:,2]/.1).astype('i8')]);_,unique=np.unique(keys,axis=0,return_index=True);proposals=support[unique]
  regiontree=cKDTree(full);othertree=cKDTree(full[regions!=a.region]);hull=ConvexHull(s);eq=hull.equations
  accepted=[];rejected=[];heights=a.heights
  for foot in proposals:
-  local=support[np.linalg.norm(support[:,:2]-foot[:2],axis=1)<.24];local=local[abs(local[:,2]-foot[2])<.11]
+  local=support_neighborhood(support_xy_tree,support,foot)
   if len(local)<4 or np.linalg.eigvalsh(np.cov(local[:,:2].T))[0]<.0015:continue
   # Eye = physical LiDAR origin, not IMU origin. Body/base is derived with offset later.
   for height in heights:

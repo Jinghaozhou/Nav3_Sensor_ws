@@ -185,6 +185,10 @@ def generate_launch_description():
         '--output',LaunchConfiguration('output'),'--ros-args','-p',['use_sim_time:=',LaunchConfiguration('use_sim_time')]],
         condition=IfCondition(PythonExpression(["'",LaunchConfiguration('keyframe_initialization_enabled'),"'.lower() == 'true' and '",LaunchConfiguration('candidate_source'),"' == 'virtual'"])),output='screen',
         on_exit=[EmitEvent(event=Shutdown(reason='virtual retriever exited'))])
+    region_tracker=ExecuteProcess(cmd=['/usr/bin/python3',str(ROOT/'scripts/region_tracker.py'),
+        '--map',LaunchConfiguration('map_pcd'),'--output',LaunchConfiguration('output'),
+        '--ros-args','-p',['use_sim_time:=',LaunchConfiguration('use_sim_time')]],output='screen',
+        on_exit=[EmitEvent(event=Shutdown(reason='region tracker exited'))])
     return LaunchDescription(args+[OpaqueFunction(function=save_run_metadata),
                                    SetParameter(name='use_sim_time', value=LaunchConfiguration('use_sim_time')),
-                                   retriever,bbs_retriever,virtual_retriever,localizer,visualizer,tf_path,canvas_tf,trace])
+                                   retriever,bbs_retriever,virtual_retriever,localizer,visualizer,tf_path,canvas_tf,trace,region_tracker])

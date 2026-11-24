@@ -128,6 +128,16 @@ Visualization Manager:
       Depth: 1
       History Policy: Keep Last
     Value: true
+  - Class: rviz_default_plugins/Marker
+    Name: 当前区域 | Current space
+    Enabled: true
+    Topic:
+      Depth: 1
+      Durability Policy: Transient Local
+      Reliability Policy: Reliable
+      History Policy: Keep Last
+      Value: /localization/region_marker
+    Value: true
   Enabled: true
   Global Options:
     Background Color: 20; 20; 25
