@@ -70,7 +70,21 @@ def voxel_indices(xyz, voxel):
     if len(xyz) == 0:
         return np.empty(0, dtype=np.int64)
     keys = np.floor(xyz / voxel).astype(np.int64)
-    _, idx = np.unique(keys, axis=0, return_index=True)
+    # Sorting one integer per point avoids the costly three-column structured
+    # sort for every long-window publication. Mixed-radix keys are injective;
+    # retain exactly the same first original point in every voxel as before.
+    low, high = keys.min(axis=0), keys.max(axis=0)
+    spans = [int(high[i]) - int(low[i]) + 1 for i in range(3)]
+    if spans[0] * spans[1] * spans[2] <= np.iinfo(np.int64).max:
+        packed = keys[:, 0] - low[0]
+        packed *= spans[1]
+        packed += keys[:, 1] - low[1]
+        packed *= spans[2]
+        packed += keys[:, 2] - low[2]
+        _, idx = np.unique(packed, return_index=True)
+    else:
+        # Very wide coordinates cannot be packed without overflow.
+        _, idx = np.unique(keys, axis=0, return_index=True)
     return np.sort(idx)
 
 
@@ -90,7 +104,8 @@ class LocalMapWindow(Node):
             self.timing_csv = path.open('x', encoding='utf-8', buffering=1)
             self.timing_csv.write('event,steady_ns,ros_ns,cloud_stamp_ns,points,reason\n')
             self.get_logger().info(f'Local-map timing CSV: {path}')
-        input_qos = QoSProfile(depth=5, reliability=ReliabilityPolicy.BEST_EFFORT)
+        input_qos = QoSProfile(depth=20, reliability=(ReliabilityPolicy.RELIABLE
+            if args.input_reliability == 'reliable' else ReliabilityPolicy.BEST_EFFORT))
         self.create_subscription(PointCloud2, args.in_topic, self.on_cloud, input_qos)
         self.local_pub = self.create_publisher(PointCloud2, args.out_topic, 1)
         self.global_pub = self.create_publisher(PointCloud2, args.global_topic, 1)
@@ -211,6 +226,7 @@ def main():
     ap.add_argument('--rate', type=float, default=1.0)
     ap.add_argument('--timing-csv', default='', help='Optional local-map publication timing CSV')
     ap.add_argument('--in-topic', default='/fast_lio/local_cloud')
+    ap.add_argument('--input-reliability', choices=['reliable', 'best_effort'], default='reliable')
     ap.add_argument('--out-topic', default='/fast_lio/local_map')
     ap.add_argument('--global-topic', default='/fast_lio/local_map_global')
     ap.add_argument('--window-status-topic', default='/fast_lio/window_status')

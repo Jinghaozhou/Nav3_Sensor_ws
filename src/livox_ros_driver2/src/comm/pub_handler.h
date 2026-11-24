@@ -37,6 +37,7 @@
 
 #include "livox_lidar_api.h"
 #include "comm/comm.h"
+#include "device_clock.h"
 
 namespace livox_ros {
 
@@ -106,7 +107,9 @@ class PubHandler {
                                              LivoxLidarEthernetPacket *data, void *client_data);
   
   static bool GetLidarId(LidarProtoType lidar_type, uint32_t handle, uint32_t& id);
-  static uint64_t GetEthPacketTimestamp(uint8_t timestamp_type, uint8_t* time_stamp, uint8_t size);
+  uint64_t GetEthPacketTimestamp(uint32_t handle, uint8_t timestamp_type, uint8_t* time_stamp, uint8_t size);
+  std::mutex clock_mutex_;
+  std::map<uint32_t, DeviceClock> device_clocks_;
 
   PointCloudsCallback points_callback_;
   void* pub_client_data_ = nullptr;

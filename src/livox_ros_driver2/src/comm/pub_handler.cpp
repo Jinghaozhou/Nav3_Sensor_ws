@@ -114,7 +114,7 @@ void PubHandler::OnLivoxLidarPointCloudCallback(uint32_t handle, const uint8_t d
       ImuData imu_data;
       imu_data.lidar_type = static_cast<uint8_t>(LidarProtoType::kLivoxLidarType);
       imu_data.handle = handle;
-      imu_data.time_stamp = GetEthPacketTimestamp(data->time_type,
+      imu_data.time_stamp = self->GetEthPacketTimestamp(handle, data->time_type,
                                                   data->timestamp, sizeof(data->timestamp));
       imu_data.gyro_x = imu->gyro_x;
       imu_data.gyro_y = imu->gyro_y;
@@ -140,7 +140,7 @@ void PubHandler::OnLivoxLidarPointCloudCallback(uint32_t handle, const uint8_t d
   packet.data_type = data->data_type;
   packet.point_num = data->dot_num;
   packet.point_interval = data->time_interval * 100 / data->dot_num;  //ns
-  packet.time_stamp = GetEthPacketTimestamp(data->time_type,
+  packet.time_stamp = self->GetEthPacketTimestamp(handle, data->time_type,
                                             data->timestamp, sizeof(data->timestamp));
   uint32_t length = data->length - sizeof(LivoxLidarEthernetPacket) + 1;
   packet.raw_data.insert(packet.raw_data.end(), data->data, data->data + length);
@@ -262,16 +262,22 @@ bool PubHandler::GetLidarId(LidarProtoType lidar_type, uint32_t handle, uint32_t
   return false;
 }
 
-uint64_t PubHandler::GetEthPacketTimestamp(uint8_t timestamp_type, uint8_t* time_stamp, uint8_t size) {
-  LdsStamp time;
-  memcpy(time.stamp_bytes, time_stamp, size);
+uint64_t PubHandler::GetEthPacketTimestamp(uint32_t handle, uint8_t timestamp_type, uint8_t* time_stamp, uint8_t size) {
+  LdsStamp time{};
+  memcpy(time.stamp_bytes, time_stamp, std::min<size_t>(size, sizeof(time.stamp_bytes)));
 
   if (timestamp_type == kTimestampTypeGptpOrPtp ||
       timestamp_type == kTimestampTypeGps) {
     return time.stamp;
   }
 
-  return std::chrono::high_resolution_clock::now().time_since_epoch().count();
+  const uint64_t host_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      std::chrono::system_clock::now().time_since_epoch()).count();
+  if (timestamp_type == kTimestampTypeNoSync && time.stamp != 0) {
+    std::lock_guard<std::mutex> lock(clock_mutex_);
+    return device_clocks_[handle].Map(time.stamp, host_ns);
+  }
+  return host_ns;
 }
 
 /*******************************/
