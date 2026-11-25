@@ -65,6 +65,10 @@ def prepare(config_path, map_path, library, output):
 def build_worker():
     src=ROOT/'vendor/3d_bbs/bbs3d'; dest=ROOT/'build/bbs'; dest.mkdir(parents=True,exist_ok=True)
     files=[ROOT/'scripts/bbs_worker.cpp']+[src/'src/cpu_bbs3d'/n for n in ['bbs3d.cpp','voxelmaps.cpp']]
+    expected={str(p.relative_to(ROOT)):sha256(p) for p in files+list((src/'include').rglob('*.hpp'))}
+    record=dest/'source_sha256.json'
+    if (dest/'bbs_worker').is_file() and record.is_file() and json.loads(record.read_text())==expected:
+        return  # 同一源码只编译一次；模型按区域独立生成。
     subprocess.run(['g++','-O3','-std=c++17','-fopenmp','-I/usr/include/eigen3',
         '-I'+str(src/'include'),*[str(p) for p in files],'-o',str(dest/'bbs_worker')],check=True)
     (dest/'source_sha256.json').write_text(json.dumps({str(p.relative_to(ROOT)):sha256(p)

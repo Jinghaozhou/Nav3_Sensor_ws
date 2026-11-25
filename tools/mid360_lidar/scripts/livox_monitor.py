@@ -77,7 +77,7 @@ class LivoxMonitor(Node):
             self.create_subscription(CustomMsg, '/lidar_points',
                                      lambda m: self._count('/lidar_points'), qos)
         else:
-            self.get_logger().error('未找到 livox_interfaces2,请先 source ~/livox_ws/install/setup.bash')
+            self.get_logger().error('未找到 livox_interfaces2,请先加载当前Nav3的scripts/source_scan_env.bash')
         self.create_subscription(Odometry, '/fast_lio/odom',
                                  lambda m: self._count('/fast_lio/odom'), qos)
         self.create_subscription(Imu, '/imu', lambda m: self._count('/imu'), qos)

@@ -73,3 +73,8 @@
 /reference_maps/virtual_*/render_poses.txt
 /reference_maps/virtual_*/lidar_offset.txt
 /reference_maps/virtual_*/reference_position_coverage.json
+
+# 13区可重建模型及区域索引；保留既有跟踪文件，新负载不入Git
+/reference_maps/bbs_space_*/
+/reference_maps/virtual_space_*/
+/reference_maps/region_tracking/

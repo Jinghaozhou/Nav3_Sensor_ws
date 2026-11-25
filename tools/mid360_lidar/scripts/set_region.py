@@ -10,7 +10,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('region', nargs='?', help='CSV region name, ID, current-location sentence, or 全图')
     parser.add_argument('--list', action='store_true', help='List known names/IDs without connecting to ROS')
-    parser.add_argument('--labels', type=Path, default=Path(__file__).resolve().parents[2] / 'kiss_localization_ws1.1/src/localization/maps/region_labels.csv')
+    parser.add_argument('--labels', type=Path, default=__import__('workspace_paths').labels_file())
     parser.add_argument('--timeout', type=float, default=60.)
     args = parser.parse_args()
     if args.list:

@@ -56,6 +56,7 @@ def generate_launch_description():
         {'cmdline_input_bd_code': 'livox0000000001'},
     ]
     driver = Node(
+        condition=IfCondition(LaunchConfiguration('driver_enabled')),
         package='livox_ros_driver2',
         executable='livox_ros_driver2_node',
         name='livox_lidar_publisher',
@@ -124,6 +125,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument('driver_enabled', default_value='true', description='Set false only for recorded raw-data replay; never start a second driver'),
         DeclareLaunchArgument('initial_window', default_value='120',
             description='Initialization/recovery history seconds (candidate, not validated)'),
         DeclareLaunchArgument('tracking_window', default_value='30',

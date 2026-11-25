@@ -13,6 +13,11 @@ ROOT=Path(__file__).resolve().parents[1]
 
 def save(path,value):path.write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n')
 
+def support_neighborhood(tree,support,foot):
+ # 空间索引替代逐点全表扫描，保留原来的严格距离和高度条件。
+ local=support[tree.query_ball_point(foot[:2],.24)]
+ return local[(np.linalg.norm(local[:,:2]-foot[:2],axis=1)<.24)&(abs(local[:,2]-foot[2])<.11)]
+
 def generate(a):
  out=a.output.absolute();out.mkdir(parents=True,exist_ok=True)
  lib=a.reference_library;manifest=json.loads((lib/'manifest.json').read_text());rows=[json.loads(x) for x in (lib/'keyframes.jsonl').read_text().splitlines()];idx=[json.loads(x) for x in (lib/'descriptors_v1/index.jsonl').read_text().splitlines()]
@@ -29,14 +34,14 @@ def generate(a):
  terrain=(abs(vec[:,2,0])>np.cos(np.deg2rad(50)))&(ev[:,0]<.035**2)&(ev[:,0]/np.maximum(ev.sum(1),1e-12)<.08)&(d[:,-1]<.4)
  if getattr(a,'support_z_min',None) is not None:
   terrain &= (p[:,2]>=a.support_z_min)&(p[:,2]<=a.support_z_max)
- support=p[terrain];support_labels=labels[terrain]
+ support=p[terrain];support_labels=labels[terrain];support_xy_tree=cKDTree(support[:,:2])
  # Select actual local support samples in quantized XY-height bins; do not average
  # different floors into a fictitious middle position.
  keys=np.column_stack([np.floor(support[:,:2]/.22).astype('i8'),np.floor(support[:,2]/.1).astype('i8')]);_,unique=np.unique(keys,axis=0,return_index=True);proposals=support[unique]
  regiontree=cKDTree(full);othertree=cKDTree(full[regions!=a.region]);hull=ConvexHull(s);eq=hull.equations
  accepted=[];rejected=[];heights=a.heights
  for foot in proposals:
-  local=support[np.linalg.norm(support[:,:2]-foot[:2],axis=1)<.24];local=local[abs(local[:,2]-foot[2])<.11]
+  local=support_neighborhood(support_xy_tree,support,foot)
   if len(local)<4 or np.linalg.eigvalsh(np.cov(local[:,:2].T))[0]<.0015:continue
   # Eye = physical LiDAR origin, not IMU origin. Body/base is derived with offset later.
   for height in heights:
@@ -83,7 +88,7 @@ def generate(a):
  result.update(usable_virtual_templates=len(index),skipped=skipped,descriptor_encode_seconds=time.perf_counter()-start,minimum_points=min(x['canonical_points'] for x in index));save(out/'build_summary.json',result);print('TEMPLATES_READY',len(index),flush=True)
 
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('--map',type=Path,default=ROOT.parent/'kiss_localization_ws1.1/src/localization/maps/building_split_space.pcd');p.add_argument('--map-cache',type=Path,required=True);p.add_argument('--reference-library',type=Path,default=ROOT/'reference_maps/keyframe_libraries/space_2/merged_20261111');p.add_argument('--output',type=Path,required=True);p.add_argument('--region',type=int,default=2);p.add_argument('--heights',type=float,nargs='+',default=[1.2]);p.add_argument('--spacing',type=float,default=.5);p.add_argument('--yaw-step',type=float,default=45);p.add_argument('--voxel',type=float,default=.1);p.add_argument('--az-step',type=float,default=1.);p.add_argument('--el-step',type=float,default=1.5);p.add_argument('--support-z-min',type=float);p.add_argument('--support-z-max',type=float);p.add_argument('--phase',choices=['stations','all'],default='all');p.add_argument('--up-base',type=float,nargs=3,help='Measured gravity-up in current IMU/base frame; not a LiDAR-IMU extrinsic change');a=p.parse_args()
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--map',type=Path,default=__import__('workspace_paths').map_file());p.add_argument('--map-cache',type=Path,required=True);p.add_argument('--reference-library',type=Path,default=ROOT/'reference_maps/keyframe_libraries/space_2/merged_20261111');p.add_argument('--output',type=Path,required=True);p.add_argument('--region',type=int,default=2);p.add_argument('--heights',type=float,nargs='+',default=[1.2]);p.add_argument('--spacing',type=float,default=.5);p.add_argument('--yaw-step',type=float,default=45);p.add_argument('--voxel',type=float,default=.1);p.add_argument('--az-step',type=float,default=1.);p.add_argument('--el-step',type=float,default=1.5);p.add_argument('--support-z-min',type=float);p.add_argument('--support-z-max',type=float);p.add_argument('--phase',choices=['stations','all'],default='all');p.add_argument('--up-base',type=float,nargs=3,help='Measured gravity-up in current IMU/base frame; not a LiDAR-IMU extrinsic change');a=p.parse_args()
  if (a.support_z_min is None)!=(a.support_z_max is None) or (a.support_z_min is not None and (not np.isfinite([a.support_z_min,a.support_z_max]).all() or a.support_z_min>a.support_z_max)):p.error('Finite paired support height bounds required')
  values=a.heights+[a.spacing,a.yaw_step,a.voxel,a.az_step,a.el_step]
  if any(not np.isfinite(x) or x<=0 for x in values):p.error('Finite positive sampling parameters required')

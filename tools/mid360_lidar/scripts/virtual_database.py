@@ -11,21 +11,21 @@ DEFAULT_VIRTUAL_CONFIG=ROOT/'config/virtual_initialization_space_10.json'
 class VirtualDatabase:
  def __init__(self,map_path,config_path=DEFAULT_VIRTUAL_CONFIG):
   c=json.loads(Path(config_path).read_text());self.search_config=c
-  if c['schema_version']!=1 or c['region_id']!=10 or not 1<=c['maximum_candidates']<=64:raise ValueError('Unsupported virtual region/budget')
+  if c['schema_version']!=1 or c['region_id'] not in range(1,14) or not 1<=c['maximum_candidates']<=64:raise ValueError('Unsupported virtual region/budget')
   self.path=ROOT/c['library'];m=json.loads((self.path/'manifest.json').read_text());self.manifest=m
   self.map_sha=sha256(map_path);self.library_sha=sha256(self.path/'manifest.json')
-  if m['map_sha256']!=self.map_sha or m['config_sha256']!=sha256(config_path) or m.get('source')!='virtual_map_raycasts_not_measured_keyframes':raise ValueError('Virtual model/map/config mismatch')
+  if m['region_id']!=c['region_id'] or m['map_sha256']!=self.map_sha or m['config_sha256']!=sha256(config_path) or m.get('source')!='virtual_map_raycasts_not_measured_keyframes':raise ValueError('Virtual model/map/config mismatch')
   for name,digest in m['files'].items():
    path=self.path/name
    if not path.resolve().is_relative_to(self.path.resolve()) or sha256(path)!=digest:raise ValueError('Virtual artifact changed: '+name)
   self.config=json.loads((self.path/'descriptor_profile.json').read_text())
   if self.config!=DEFAULT_CONFIG:raise ValueError('Virtual descriptor profile changed')
-  self.profile_sha=config_hash(dict(descriptor=self.config,retrieval=c));self.region_id=10
+  self.profile_sha=config_hash(dict(descriptor=self.config,retrieval=c));self.region_id=c['region_id']
   self.templates=[json.loads(x) for x in (self.path/'index.jsonl').read_text().splitlines()]
   z=np.load(self.path/'descriptors.npz',allow_pickle=False);self.descriptors=z['descriptors'].copy()
   if len(set(x['id'] for x in self.templates))!=len(self.templates) or list(z['ids'])!=[x['id'] for x in self.templates] or self.descriptors.shape!=(len(self.templates),20,60) or not np.isfinite(self.descriptors).all():raise ValueError('Invalid virtual descriptor arrays')
   for x in self.templates:
-   if x['region_id']!=10 or not rigid(x['map_T_base']) or not rigid(x['map_T_descriptor']) or not rigid(x['base_T_descriptor']) or not np.allclose(np.array(x['map_T_base'])@np.array(x['base_T_descriptor']),x['map_T_descriptor'],atol=1e-6):raise ValueError('Virtual pose mismatch')
+   if x['region_id']!=self.region_id or not rigid(x['map_T_base']) or not rigid(x['map_T_descriptor']) or not rigid(x['base_T_descriptor']) or not np.allclose(np.array(x['map_T_base'])@np.array(x['base_T_descriptor']),x['map_T_descriptor'],atol=1e-6):raise ValueError('Virtual pose mismatch')
   self.origin=np.array(m['sensor_offset_base']);self.index=list(range(c['maximum_candidates']))
   self.norm=np.linalg.norm(self.descriptors,axis=1);self.packet_reason='virtual_shortlist';self.last_metrics={}
  def retrieve(self,points_base,up_base,odom_T_base):

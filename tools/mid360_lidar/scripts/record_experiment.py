@@ -26,9 +26,10 @@ TOPICS = ['/localization/selected_cloud', '/fast_lio/gravity', '/localization/ke
 
 # Preserve one-shot reference maps and match the transient-local RViz subscriptions.
 # Private evidence cannot replace the authoritative /localization/status.
+TOPICS += ['/localization/current_region','/localization/region_transition','/localization/region_marker']
 TOPICS += ['/localization/race_control'] + [f'/localization_race/{source}/{topic}'
     for source in ('bbs','keyframes') for topic in ('status','input_snapshot','selected_cloud','keyframe_candidates','query_status')]
-LATCHED_TOPICS = ['/tf_static', '/localization/status', '/localization/path',
+LATCHED_TOPICS = ['/localization/current_region','/localization/region_marker','/tf_static', '/localization/status', '/localization/path',
                   '/localization/match_markers', '/localization/map_path',
                   '/localization/map_pose'] + [t for t in TOPICS if '/comparison/' in t]
 

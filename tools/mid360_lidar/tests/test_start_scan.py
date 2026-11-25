@@ -58,14 +58,15 @@ class Lifecycle(unittest.TestCase):
                 if role=='localization' and scan_mode=='bbs':
                     self.assertIn('candidate_source:=bbs',command)
                     if region=='space_10':
-                        self.assertTrue(any('region_initialization_bbs_space_10.yaml' in str(x) for x in command))
+                        self.assertTrue(any('region_initialization_all_spaces.yaml' in str(x) for x in command))
                         self.assertTrue(any('bbs_initialization_space_10.json' in str(x) for x in command))
                     self.assertIn('keyframe_initialization_enabled:=true',command)
                     self.assertNotIn('hierarchical_initialization_enabled:=true',command)
                 if role=='localization' and scan_mode=='virtual':
                     self.assertIn('candidate_source:=virtual',command)
                     self.assertIn('hierarchical_initialization_enabled:=true',command)
-                    self.assertTrue(any('region_initialization_bbs_space_10.yaml' in str(x) for x in command))
+                    self.assertTrue(any(f'virtual_initialization_{region}.json' in str(x) for x in command))
+                    self.assertTrue(any('region_initialization_all_spaces.yaml' in str(x) for x in command))
                 child = REAL_POPEN([sys.executable,str(worker),role,str(events),str(session),ready,pointer,mode],**kwargs)
                 if role=='localization':
                     timer=threading.Timer(.3,scan.request_stop);timer.start()
@@ -108,6 +109,10 @@ class Lifecycle(unittest.TestCase):
 
     def test_virtual_mode_is_explicit_and_uses_dynamic_space10_profile(self):
         self.exercise("normal",scan_mode="virtual",region="space_10")
+
+    def test_other_regions_route_without_space10_fallback(self):
+        self.exercise("normal",scan_mode="bbs",region="space_1")
+        self.exercise("normal",scan_mode="virtual",region="space_3")
 
     def test_space10_uses_its_own_model_and_dynamic_profile(self):
         self.exercise("normal",scan_mode="bbs",region="space_10")

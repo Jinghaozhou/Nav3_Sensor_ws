@@ -1,5 +1,7 @@
 /**:
     ros__parameters:
+        world_frame: odom
+        body_frame: base_link
         feature_extract_enable: false
         point_filter_num: 2    # 每2点取1(2026-09-29 发散后减压:1→2,剧烈动作时单帧耗时不破100ms预算;地图密度影响小)
         max_iteration: 3
@@ -7,6 +9,7 @@
         filter_size_map: 0.1
         cube_side_length: 1000.0
         runtime_pos_log_enable: true    # FL-11 每帧耗时/点数统计用;mat_out.txt 的外参日志留作路线B备用;统计完成后可关
+        map_save_timestamp_suffix: true  # Preserve unique output names for the experimental scanner
         map_file_path: "./slam_output/mid360_map.pcd"   # 存到 slam_output/，自动追加时间戳
 
         common:
