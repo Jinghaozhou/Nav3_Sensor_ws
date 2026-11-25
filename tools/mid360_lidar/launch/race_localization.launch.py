@@ -23,7 +23,7 @@ def setup(context):
     db=KeyframeDatabase(library,map_path);bbs=BbsDatabase(map_path);bbs.close()
     validate_sensor_config(ROOT/'mid360_robot.yaml',db);validate_sensor_config(ROOT/'mid360_robot.yaml',bbs)
     from prepare_race_map_cache import ensure_cache
-    cache=ensure_cache(map_path)
+    cache=ensure_cache(map_path,__import__('workspace_paths').labels_file())
     versions=dict(map_sha256=db.map_sha,keyframes_sha256=db.library_sha,bbs_sha256=bbs.library_sha,keyframes_profile_sha256=db.profile_sha,bbs_profile_sha256=bbs.profile_sha,
         library=str(library),bbs_model=str(bbs.path),region='space_2',policy='first independently two-window-confirmed safe proposal wins',field_validated=False)
     path=output/'race_versions.json'

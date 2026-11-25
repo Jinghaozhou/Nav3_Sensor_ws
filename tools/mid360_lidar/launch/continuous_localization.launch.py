@@ -81,7 +81,7 @@ def save_run_metadata(context):
             database=BbsDatabase(map_file,bbs_config)
             database.close()
             from prepare_race_map_cache import ensure_cache
-            actions.append(SetLaunchConfiguration('map_cache_directory',str(ensure_cache(map_file))))
+            actions.append(SetLaunchConfiguration('map_cache_directory',str(ensure_cache(map_file, labels))))
             metadata.update(bbs_experimental=True,bbs_config=str(bbs_config),bbs_model=str(database.path),
                 bbs_maximum_candidates=database.search_config['maximum_candidates'],
                 bbs_min_initial_overlap_percent=database.search_config['minimum_initial_overlap_percent'])
@@ -93,7 +93,7 @@ def save_run_metadata(context):
             from prepare_race_map_cache import ensure_cache
             virtual_config=Path(LaunchConfiguration('virtual_config').perform(context)).expanduser().resolve()
             database=VirtualDatabase(map_file,virtual_config)
-            actions.append(SetLaunchConfiguration('map_cache_directory',str(ensure_cache(map_file))))
+            actions.append(SetLaunchConfiguration('map_cache_directory',str(ensure_cache(map_file, labels))))
             shutil.copy2(virtual_config,folder/'virtual_initialization.json')
             shutil.copy2(database.path/'manifest.json',folder/'virtual_manifest.json')
             metadata.update(virtual_templates=True,virtual_template_count=len(database.templates),virtual_station_count=database.manifest['stations'],virtual_shortlist_budget=len(database.index),reference_source='virtual_not_measured_keyframes')

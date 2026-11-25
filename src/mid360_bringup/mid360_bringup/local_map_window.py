@@ -4,7 +4,9 @@
 import argparse
 import json
 import sys
+import time
 from collections import deque
+from pathlib import Path
 
 import numpy as np
 import rclpy
@@ -81,6 +83,13 @@ class LocalMapWindow(Node):
         self.tracking = False
         self.failures = 0
         self.adaptive_enabled = False
+        self.timing_csv = None
+        if args.timing_csv:
+            path = Path(args.timing_csv).expanduser()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            self.timing_csv = path.open('x', encoding='utf-8', buffering=1)
+            self.timing_csv.write('event,steady_ns,ros_ns,cloud_stamp_ns,points,reason\n')
+            self.get_logger().info(f'Local-map timing CSV: {path}')
         input_qos = QoSProfile(depth=5, reliability=ReliabilityPolicy.BEST_EFFORT)
         self.create_subscription(PointCloud2, args.in_topic, self.on_cloud, input_qos)
         self.local_pub = self.create_publisher(PointCloud2, args.out_topic, 1)
@@ -150,10 +159,12 @@ class LocalMapWindow(Node):
 
     def publish_window(self):
         if not self.window:
+            self.log_timing('skip', 0, 0, 'no_input')
             return
         latest = self.window[-1][0]
         age = (self.get_clock().now() - latest).nanoseconds / 1e9
         if age > 2.0 or age < -1.0:
+            self.log_timing('skip', latest.nanoseconds, 0, 'input_stamp_out_of_range')
             return
         long_cloud, long_frames, long_span = self.make_window(self.args.window_time)
         self.global_pub.publish(long_cloud)
@@ -164,6 +175,7 @@ class LocalMapWindow(Node):
         else:
             local_cloud, local_frames, local_span = long_cloud, long_frames, long_span
         self.local_pub.publish(local_cloud)
+        self.log_timing('publish', latest.nanoseconds, local_cloud.width, '')
         status = dict(schema_version=2, cloud_stamp_ns=latest.nanoseconds,
                       window_start_ns=self.window[-local_frames][0].nanoseconds,
                       long_window_start_ns=self.window[-long_frames][0].nanoseconds,
@@ -176,6 +188,17 @@ class LocalMapWindow(Node):
                       long_actual_seconds=round(long_span, 2), long_points=long_cloud.width)
         self.status_pub.publish(String(data=json.dumps(status)))
 
+    def log_timing(self, event, cloud_stamp_ns, points, reason):
+        if self.timing_csv is not None:
+            self.timing_csv.write(
+                f'{event},{time.monotonic_ns()},{self.get_clock().now().nanoseconds},'
+                f'{cloud_stamp_ns},{points},{reason}\n')
+
+    def destroy_node(self):
+        if self.timing_csv is not None:
+            self.timing_csv.close()
+        return super().destroy_node()
+
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
@@ -186,6 +209,7 @@ def main():
     ap.add_argument('--max-buffer-points', type=int, default=3000000)
     ap.add_argument('--voxel', type=float, default=0.15)
     ap.add_argument('--rate', type=float, default=1.0)
+    ap.add_argument('--timing-csv', default='', help='Optional local-map publication timing CSV')
     ap.add_argument('--in-topic', default='/fast_lio/local_cloud')
     ap.add_argument('--out-topic', default='/fast_lio/local_map')
     ap.add_argument('--global-topic', default='/fast_lio/local_map_global')
