@@ -31,7 +31,7 @@ def setup(context):
     finally:
         bbs.close()
     from prepare_race_map_cache import ensure_cache
-    cache=ensure_cache(map_path)
+    cache=ensure_cache(map_path,__import__('workspace_paths').labels_file())
     versions=dict(sources=['bbs','virtual'],map_sha256=db.map_sha,virtual_sha256=db.library_sha,bbs_sha256=bbs.library_sha,
         virtual_profile_sha256=db.profile_sha,bbs_profile_sha256=bbs.profile_sha,
         virtual_model=str(db.path),virtual_config=str(virtual_config),bbs_config=str(bbs_config),bbs_model=str(bbs.path),
