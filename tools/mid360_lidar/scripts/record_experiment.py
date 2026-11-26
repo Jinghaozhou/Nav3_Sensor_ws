@@ -28,13 +28,13 @@ TOPICS = ['/localization/selected_cloud', '/fast_lio/gravity', '/localization/ke
 # Private evidence cannot replace the authoritative /localization/status.
 TOPICS += ['/localization/current_region','/localization/region_transition','/localization/region_marker']
 TOPICS += ['/localization/race_control'] + [f'/localization_race/{source}/{topic}'
-    for source in ('bbs','keyframes') for topic in ('status','input_snapshot','selected_cloud','keyframe_candidates','query_status')]
+    for source in ('bbs','virtual','keyframes') for topic in ('status','input_snapshot','selected_cloud','keyframe_candidates','query_status')]
 LATCHED_TOPICS = ['/localization/current_region','/localization/region_marker','/tf_static', '/localization/status', '/localization/path',
                   '/localization/match_markers', '/localization/map_path',
                   '/localization/map_pose'] + [t for t in TOPICS if '/comparison/' in t]
 
 
-LATCHED_TOPICS += ['/localization/race_control','/localization_race/bbs/status','/localization_race/keyframes/status']
+LATCHED_TOPICS += ['/localization/race_control','/localization_race/bbs/status','/localization_race/keyframes/status','/localization_race/virtual/status']
 
 def write_qos(path):
     path.write_text(''.join(

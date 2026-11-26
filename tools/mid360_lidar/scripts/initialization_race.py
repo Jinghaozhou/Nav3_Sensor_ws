@@ -17,11 +17,13 @@ class RaceCoordinator(Node):
     def __init__(self, args):
         super().__init__('initialization_race')
         self.versions=json.loads(args.versions.read_text())
+        if self.versions.get('sources', ['bbs','keyframes']) not in (['bbs','virtual'], ['bbs','keyframes']):
+            raise ValueError('Unsupported race sources')
         self.generation=0;self.epoch=0;self.start_ns=0;self.waiting=False;self.pending=None
         self.queue=[];self.call=None;self.last_query=0
         self.control=self.create_publisher(UInt64,'/localization/race_control',QoSProfile(depth=1,durability=DurabilityPolicy.TRANSIENT_LOCAL))
         self.client=self.create_client(RaceInitialization,'/localization/race_initialization')
-        for source in ('bbs','keyframes'):
+        for source in self.versions.get('sources', ['bbs','keyframes']):
             self.create_subscription(LocalizationResult,f'/localization_race/{source}/status',lambda m,s=source:self.proposal(s,m),10)
         args.output.mkdir(parents=True,exist_ok=True)
         self.log=(args.output/'race_events.jsonl').open('x')

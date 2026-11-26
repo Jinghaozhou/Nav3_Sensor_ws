@@ -118,7 +118,7 @@ def generate_launch_description():
     loc=Path(get_package_share_directory('kiss_matcher_localization'))
     vis=Path(get_package_share_directory('localization_visualizer'))
     recorder=Path(get_package_share_directory('localization_path_recorder'))
-    args=[DeclareLaunchArgument('map_cache_directory',default_value=''),DeclareLaunchArgument('race_bbs_profile_sha256',default_value=''),DeclareLaunchArgument('external_initialization_enabled',default_value='false'),DeclareLaunchArgument('race_bbs_sha256',default_value=''),DeclareLaunchArgument('race_keyframes_sha256',default_value=''),DeclareLaunchArgument('race_profile_sha256',default_value=''),DeclareLaunchArgument('visualizer_local_topic',default_value='/fast_lio/local_map'),
+    args=[DeclareLaunchArgument('race_virtual_sha256',default_value=''),DeclareLaunchArgument('race_virtual_profile_sha256',default_value=''),DeclareLaunchArgument('map_cache_directory',default_value=''),DeclareLaunchArgument('race_bbs_profile_sha256',default_value=''),DeclareLaunchArgument('external_initialization_enabled',default_value='false'),DeclareLaunchArgument('race_bbs_sha256',default_value=''),DeclareLaunchArgument('race_keyframes_sha256',default_value=''),DeclareLaunchArgument('race_profile_sha256',default_value=''),DeclareLaunchArgument('visualizer_local_topic',default_value='/fast_lio/local_map'),
           DeclareLaunchArgument('candidate_source',default_value='keyframes'),
           DeclareLaunchArgument('virtual_config',default_value=str(ROOT/'config/virtual_initialization_space_10.json')),
           DeclareLaunchArgument('bbs_config',default_value=str(ROOT/'config/bbs_initialization.json')),
@@ -142,7 +142,7 @@ def generate_launch_description():
           DeclareLaunchArgument('output',default_value=str(ROOT/'slam_output/localization_sessions'/datetime.now().strftime('%Y%m%d_%H%M%S_%f')))]
     localizer=IncludeLaunchDescription(AnyLaunchDescriptionSource(str(loc/'launch/navigation_localization.launch.yaml')),
         launch_arguments={'map_pcd':LaunchConfiguration('map_pcd'),
-                          **{k:LaunchConfiguration(k) for k in ['map_cache_directory','race_bbs_profile_sha256','external_initialization_enabled', 'race_bbs_sha256', 'race_keyframes_sha256', 'race_profile_sha256','candidate_source','hierarchical_min_initial_overlap','hierarchical_initialization_enabled','keyframe_initialization_enabled','keyframe_library_sha256','keyframe_profile_sha256','keyframe_region_id','keyframe_expected_candidates']},
+                          **{k:LaunchConfiguration(k) for k in ['race_virtual_sha256','race_virtual_profile_sha256','map_cache_directory','race_bbs_profile_sha256','external_initialization_enabled', 'race_bbs_sha256', 'race_keyframes_sha256', 'race_profile_sha256','candidate_source','hierarchical_min_initial_overlap','hierarchical_initialization_enabled','keyframe_initialization_enabled','keyframe_library_sha256','keyframe_profile_sha256','keyframe_region_id','keyframe_expected_candidates']},
                           'config_path':LaunchConfiguration('config_path'),
                           'region_labels_csv':LaunchConfiguration('region_labels_csv'),
                           'initial_region':LaunchConfiguration('initial_region'),

@@ -11,7 +11,7 @@ class VirtualRetriever(Retriever):
   self.get_logger().info('VIRTUAL_QUERY '+json.dumps(self.db.last_metrics))
   return result
 def main():
- p=argparse.ArgumentParser();p.add_argument('--config',type=Path,default=DEFAULT_VIRTUAL_CONFIG);p.add_argument('--map',type=Path,required=True);p.add_argument('--output',type=Path);a,ros=p.parse_known_args()
+ p=argparse.ArgumentParser();p.add_argument('--config',type=Path,default=DEFAULT_VIRTUAL_CONFIG);p.add_argument('--map',type=Path,required=True);p.add_argument('--output',type=Path);p.add_argument('--race-controlled',action='store_true');a,ros=p.parse_known_args()
  a.node_name='virtual_retriever';a.query_label='VIRTUAL_QUERY';rclpy.init(args=ros);node=VirtualRetriever(a,VirtualDatabase(a.map,a.config))
  try:rclpy.spin(node)
  except KeyboardInterrupt:pass

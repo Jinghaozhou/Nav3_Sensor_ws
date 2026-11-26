@@ -17,12 +17,14 @@ assert os.environ.get('ROS_DOMAIN_ID')=='179'
 OUT=Path(sys.argv[1]);OUT.mkdir(parents=True,exist_ok=False)
 source=Path(os.environ.get('NAV3_TEST_FIXTURE_ROOT',str(ROOT.parents[1])))/'联调记录/20261111_space2关键帧扩充';q=json.loads((source/'queries.json').read_text())[0]
 ob=np.array(q['odom_T_base']);points=load_xyz(source/q['pcd'])
+if os.environ.get('NAV3_TEST_QUERY_NPZ'):
+ z=np.load(os.environ['NAV3_TEST_QUERY_NPZ']);ob=np.eye(4);points=z['points'];q={'up_base':z['up_base'].tolist()}
 rclpy.init();node=rclpy.create_node('race_real_geometry_test');tf=TransformBroadcaster(node)
 pubs={t:node.create_publisher(PointCloud2,t,10) for t in ['/fast_lio/local_cloud','/fast_lio/local_map','/fast_lio/local_map_global']}
 odom=node.create_publisher(Odometry,'/fast_lio/odom',10);gravity=node.create_publisher(Vector3Stamped,'/fast_lio/gravity',10)
 permissions=[];node.create_subscription(Bool,"/localization/navigation_allowed",lambda m:permissions.append(m.data),10)
 results=[];node.create_subscription(LocalizationResult,'/localization/status',results.append,10)
-log=(OUT/'launch.log').open('w');p=subprocess.Popen(['ros2','launch',str(ROOT/'launch/race_localization.launch.py'),'output:='+str(OUT),'rviz:=false','record_inputs:=false'],stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
+log=(OUT/'launch.log').open('w');p=subprocess.Popen(['ros2','launch',str(ROOT/'launch/race_localization.launch.py'),'output:='+str(OUT),'rviz:=false','record_inputs:=false','initial_region:='+os.environ.get('NAV3_TEST_REGION','space_2')],stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
 last=0;success=False;stopped_bbs=None;stage='initial';before_recovery=0;tf_gids=set();peak_rss_kib=0
 from tf2_msgs.msg import TFMessage
 def tf_seen(m):
@@ -45,7 +47,7 @@ try:
  end=time.monotonic()+100
  while time.monotonic()<end:
   if p.poll() is not None:raise RuntimeError('launch exited '+str(p.returncode))
-  if '--history-first' in sys.argv and stopped_bbs is None:
+  if '--virtual-first' in sys.argv and stopped_bbs is None:
    import re
    text=(OUT/'launch.log').read_text()
    match=re.search(r'\[python3-2\]: process started with pid \[(\d+)\]',text)
@@ -75,7 +77,7 @@ try:
  events=[json.loads(x) for x in (OUT/'race_events.jsonl').read_text().splitlines()]
  winners=[x['winner'] for x in events if x['event']=='race_closed']
  assert len(winners)>=2,events
- if '--history-first' in sys.argv:assert winners[0]=='keyframes',winners
+ if '--virtual-first' in sys.argv:assert winners[0]=='virtual',winners
  assert True in permissions and False in permissions,permissions
  stale_deadline=time.monotonic()+3.5
  while time.monotonic()<stale_deadline:rclpy.spin_once(node,timeout_sec=.05)

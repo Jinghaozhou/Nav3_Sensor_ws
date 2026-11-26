@@ -142,8 +142,8 @@ class ScanSession:
                         'map_pcd:=' + str(map_file())]
                     if self.args.mode in ('building5','keyframes','hierarchical','bbs','virtual'):
                         command += ['region_multistart_enabled:=true',
-                                    'region_seed_file:=' + str(ROOT / ('config/region_initialization_all_spaces.yaml' if self.args.mode in ('bbs','virtual') else 'config/region_initialization_space.yaml'))]
-                    if self.args.mode in ('keyframes','hierarchical','race'):
+                                    'region_seed_file:=' + str(ROOT / ('config/region_initialization_all_spaces.yaml' if self.args.mode in ('bbs','virtual','race') else 'config/region_initialization_space.yaml'))]
+                    if self.args.mode in ('keyframes','hierarchical'):
                         command += ['keyframe_library:=' + str(self.args.keyframe_library)]
                         if self.args.mode!='race':command += ['keyframe_initialization_enabled:=true']
                         if self.args.mode == 'hierarchical': command += ['hierarchical_initialization_enabled:=true']
@@ -194,6 +194,8 @@ def map_file():
 
 
 def preflight(args):
+    if args.mode=='race' and args.keyframe_library is not None:
+        raise RuntimeError('race现使用BBS＋虚拟模板，不接受--keyframe-library；实采库对照请选择hierarchical或keyframes')
     from ament_index_python.packages import get_package_share_directory
     import rclpy
     for package in ['livox_ros_driver2', 'fast_lio', 'kiss_matcher_localization',
@@ -208,7 +210,7 @@ def preflight(args):
     if not region_index.is_file():raise RuntimeError('区域维护索引未生成，请先运行prepare_region_tracking.py')
     if args.mode in ('building5','keyframes','hierarchical','bbs','race','virtual'):
         import yaml
-        profile_path = ROOT / ('config/region_initialization_all_spaces.yaml' if args.mode in ('bbs','virtual') else 'config/region_initialization_space.yaml')
+        profile_path = ROOT / ('config/region_initialization_all_spaces.yaml' if args.mode in ('bbs','virtual','race') else 'config/region_initialization_space.yaml')
         profile = yaml.safe_load(profile_path.read_text())
         h = hashlib.sha256()
         with map_file().open('rb') as source:
@@ -220,7 +222,7 @@ def preflight(args):
         if index_meta['map_sha256']!=h.hexdigest():raise RuntimeError('区域索引属于其他地图，请重新生成')
         from build_keyframe_library import sha256
         if sha256(region_index.parent/'regions.npz')!=index_meta['index_sha256']:raise RuntimeError('区域索引文件校验失败')
-    if args.mode in ('keyframes','hierarchical','race'):
+    if args.mode in ('keyframes','hierarchical'):
         if args.region not in ('space_2','2'):raise RuntimeError('当前关键帧试验库仅支持space_2')
         from keyframe_database import KeyframeDatabase,validate_sensor_config,default_library
         args.keyframe_library = (args.keyframe_library or default_library()).expanduser().resolve()
@@ -230,7 +232,7 @@ def preflight(args):
         from ament_index_python.packages import get_package_prefix
         fastlio=Path(get_package_prefix('fast_lio'))/'lib/fast_lio/fastlio_mapping'
         if b'/fast_lio/gravity' not in fastlio.read_bytes():raise RuntimeError('当前Fast-LIO尚无gravity话题，请重新编译/安装更新后的雷达工程')
-    if args.mode=='virtual':
+    if args.mode in ('virtual','race'):
         from region_profiles import virtual_config_for_region
         from virtual_database import VirtualDatabase
         from keyframe_database import validate_sensor_config
@@ -249,7 +251,7 @@ def preflight(args):
         finally: database.close()
         from ament_index_python.packages import get_package_prefix
         installed=Path(get_package_prefix('kiss_matcher_localization'))/'lib/kiss_matcher_localization/navigation_localizer'
-        if args.mode=='race' and b'race_initialization' not in installed.read_bytes():raise RuntimeError('请先编译安装双路初始化定位器')
+        if args.mode=='race' and b'race_virtual_sha256' not in installed.read_bytes():raise RuntimeError('请先编译安装BBS＋虚拟模板双路初始化定位器')
         if b'dynamic_candidates_only' not in installed.read_bytes(): raise RuntimeError('请先编译安装支持动态区域候选的定位器')
         if b'candidate_source' not in installed.read_bytes(): raise RuntimeError('定位器尚未安装BBS候选校验版本，请先编译')
         fastlio=Path(get_package_prefix('fast_lio'))/'lib/fast_lio/fastlio_mapping'
@@ -270,7 +272,7 @@ def preflight(args):
         rclpy.shutdown()
     print(f'预检通过：环境、地图、空间({free:.1f}GiB)、当前ROS域。模式={args.mode}', flush=True)
     if args.mode=='race':
-        print(f'双路初始化：BBS + 实采分层库({args.keyframe_count}帧)；活动库={args.keyframe_library}；各自两窗确认，主节点应用首个安全结果。',flush=True)
+        print(f'双路初始化：{args.region} BBS＋虚拟模板（{args.virtual_station_count}站位/{args.virtual_template_count}模板）；各自VGICP、歧义及两窗确认，主节点应用首个安全结果；不读取实采库。',flush=True)
         print('结束录包后'+('跳过自动补库（独立对照）。' if args.no_auto_library_update else '自动筛选space_2补库，下轮使用；原40帧冻结保留。'),flush=True)
     if args.mode=='virtual':
         print(f'虚拟模板：{args.region}，{args.virtual_station_count}个待核验站位/{args.virtual_template_count}模板→描述子Top24去重候选→分层VGICP→歧义/两窗；不是实采库，不自动补库。',flush=True)
@@ -284,7 +286,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--keyframe-library', type=Path, help='Override the shared experimental reference library')
     parser.add_argument('--mode', choices=['building5', 'keyframes', 'hierarchical', 'bbs', 'race', 'virtual'], default='race',
-                        help='race (default): BBS and hierarchical reference race; building5: fixed VGICP seeds; keyframes: exhaustive database trial; hierarchical: grouped database search; bbs: map-only competing-peak BBS trial; virtual: selected region map-raycast template shortlist')
+                        help='race（默认）：BBS与虚拟模板竞争； building5: fixed VGICP seeds; keyframes: exhaustive database trial; hierarchical: grouped database search; bbs: map-only competing-peak BBS trial; virtual: selected region map-raycast template shortlist')
     parser.add_argument('--region', default='space_2', help='Actual current region, not navigation destination')
     parser.add_argument('--bag-root', type=Path, default=ROOT / 'bags')
     parser.add_argument('--no-rviz', action='store_true')
@@ -292,7 +294,7 @@ def main():
     parser.add_argument('--no-render', action='store_true')
     parser.add_argument('--check', action='store_true', help='Read-only checks; do not start hardware or record')
     args = parser.parse_args()
-    if args.mode in ('bbs','virtual') and args.region not in ('space_2','2'):
+    if args.mode in ('bbs','virtual','race') and args.region not in ('space_2','2'):
         args.no_auto_library_update=True
     try:
         preflight(args)
