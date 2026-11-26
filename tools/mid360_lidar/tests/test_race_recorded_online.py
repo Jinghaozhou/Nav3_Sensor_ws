@@ -24,7 +24,7 @@ pubs={t:node.create_publisher(PointCloud2,t,10) for t in ['/fast_lio/local_cloud
 odom=node.create_publisher(Odometry,'/fast_lio/odom',10);gravity=node.create_publisher(Vector3Stamped,'/fast_lio/gravity',10)
 permissions=[];node.create_subscription(Bool,"/localization/navigation_allowed",lambda m:permissions.append(m.data),10)
 results=[];node.create_subscription(LocalizationResult,'/localization/status',results.append,10)
-log=(OUT/'launch.log').open('w');p=subprocess.Popen(['ros2','launch',str(ROOT/'launch/race_localization.launch.py'),'output:='+str(OUT),'rviz:=false','record_inputs:=false','initial_region:='+os.environ.get('NAV3_TEST_REGION','space_2')],stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
+log=(OUT/'launch.log').open('w');p=subprocess.Popen(['ros2','launch',str(ROOT/'launch/race_localization.launch.py'),'output:='+str(OUT),'rviz:=false','record_inputs:=false','initial_region:='+os.environ.get('NAV3_TEST_REGION','space_2'),'navigation_permission_allow_after_initialization:='+os.environ.get('NAV3_TEST_LOOSE_PERMISSION','true'), 'timing_diagnostics_csv:='+str(OUT/'timing.csv')],stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
 last=0;success=False;stopped_bbs=None;stage='initial';before_recovery=0;tf_gids=set();peak_rss_kib=0
 from tf2_msgs.msg import TFMessage
 def tf_seen(m):
@@ -81,8 +81,9 @@ try:
  assert True in permissions and False in permissions,permissions
  stale_deadline=time.monotonic()+3.5
  while time.monotonic()<stale_deadline:rclpy.spin_once(node,timeout_sec=.05)
- assert permissions and permissions[-1] is False,permissions
- print('PASS permission initially denied, granted after application, revoked on stale input',flush=True)
+ expected=os.environ.get('NAV3_TEST_LOOSE_PERMISSION','true').lower()=='true'
+ assert permissions and permissions[-1] is expected,permissions
+ print('PASS permission initially denied, granted after application; stale-input permission='+str(expected),flush=True)
  print('PASS',[(m.reason,m.overlap_percent) for m in results[-6:]],flush=True)
 finally:
  if stopped_bbs is not None:os.kill(stopped_bbs,signal.SIGCONT)

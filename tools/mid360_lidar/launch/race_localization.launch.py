@@ -65,7 +65,7 @@ def setup(context):
         cmd+=['--ros-args','-p','use_sim_time:='+value('use_sim_time'),'-r','/localization/keyframe_candidates:='+ns+'/keyframe_candidates',
             '-r','/localization/keyframe_status:='+ns+'/query_status','-r','/localization/status:='+ns+'/status']
         actions.append(ExecuteProcess(cmd=cmd,output='screen',on_exit=[EmitEvent(event=Shutdown(reason=source+' query producer exited'))]))
-    owner={k:value(k) for k in ('output','rviz','use_sim_time','record_inputs','map_pcd','initial_region')}
+    owner={k:value(k) for k in ('output','rviz','use_sim_time','record_inputs','map_pcd','initial_region','navigation_permission_allow_after_initialization','timing_diagnostics_csv')}
     owner.update(map_cache_directory=str(cache),region_multistart_enabled='true',external_initialization_enabled='true',
         region_seed_file=str(dynamic_profile()),
         race_bbs_profile_sha256=bbs.profile_sha,race_bbs_sha256=bbs.library_sha,race_virtual_sha256=db.library_sha,race_virtual_profile_sha256=db.profile_sha)
@@ -77,5 +77,6 @@ def setup(context):
 
 def generate_launch_description():
     defaults=dict(output=str(ROOT/'slam_output/localization_sessions'/datetime.now().strftime('%Y%m%d_%H%M%S_%f')),rviz='true',use_sim_time='false',record_inputs='true',
-        map_pcd=str(__import__('workspace_paths').map_file()),initial_region='space_2')
+        map_pcd=str(__import__('workspace_paths').map_file()),initial_region='space_2',
+        navigation_permission_allow_after_initialization='true',timing_diagnostics_csv='')
     return LaunchDescription([DeclareLaunchArgument(k,default_value=v) for k,v in defaults.items()]+[OpaqueFunction(function=setup)])
