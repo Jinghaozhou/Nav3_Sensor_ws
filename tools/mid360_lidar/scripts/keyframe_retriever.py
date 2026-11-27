@@ -46,7 +46,7 @@ class Retriever(Node):
         self.race_generation=m.data
     def reset(self):self.clouds.clear();self.odom.clear();self.gravity.clear();self.last_query=None
     def odom_cb(self,m):
-        if (m.header.frame_id,m.child_frame_id)!=('odom','base_link'):return
+        if (m.header.frame_id,m.child_frame_id)!=('odom',getattr(self.a,'odom_body_frame','base_link')):return
         n=ns(m.header.stamp)
         try:self.odom[n]=message_pose(m.pose.pose)
         except ValueError:return

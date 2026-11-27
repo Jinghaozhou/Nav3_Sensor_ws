@@ -109,6 +109,7 @@ class BbsRetriever(Retriever):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--race-controlled',action='store_true')
+    p.add_argument('--odom-body-frame',default='base_link',choices=['base_link','imu_link'])
     p.add_argument('--config',type=Path,default=DEFAULT_BBS_CONFIG)
     p.add_argument('--map',type=Path,required=True);p.add_argument('--output',type=Path)
     a,ros=p.parse_known_args();rclpy.init(args=ros)

@@ -1,0 +1,5 @@
+# Nominal mount from 优化方向.md, not a measured calibration.
+# base_link is Unitree Go2 URDF's base origin (x forward, y left, z up).
+# p_base = R_base_lidar * p_lidar + xyz; lidar is the raw cloud origin.
+xyz: [0.207993, 0.0, 0.152959]
+rpy: [0.0, 0.34906585, 0.0]

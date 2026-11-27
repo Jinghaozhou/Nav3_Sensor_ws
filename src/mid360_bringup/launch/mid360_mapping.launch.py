@@ -1,15 +1,16 @@
-"""Unified MID360 mapping launch. base_link is the IMU body frame."""
+"""MID360 mapping with an optional Go2 body origin and nominal sensor mount."""
+import json
 from pathlib import Path
 from datetime import datetime
 import re
 import yaml
 import numpy as np
-from scipy.spatial.transform import Rotation
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from mid360_bringup.mount_tf import go2_transforms, static_arguments
 
 
 TOPIC_KEYS = ('lidar', 'imu', 'odom', 'local_cloud', 'body_cloud',
@@ -61,7 +62,17 @@ def start(context):
         raise ValueError('extrinsic_T must contain three finite values')
     if not np.isfinite(rotation).all() or not np.allclose(rotation.T @ rotation, np.eye(3), atol=1e-4) or not np.isclose(np.linalg.det(rotation), 1.0, atol=1e-4):
         raise ValueError('extrinsic_R must be a proper rotation matrix')
-    quat = Rotation.from_matrix(rotation).as_quat()
+    go2 = value('robot_model') == 'go2'
+    body_frame = 'imu_link' if go2 else 'base_link'
+    if go2:
+        mount = yaml.safe_load(Path(value('mount_config')).expanduser().read_text())
+        imu_base, base_lidar = go2_transforms(translation, rotation, mount)
+        # The SDK can pre-transform raw points. The mount belongs in TF only.
+        driver_config = json.loads(Path(value('driver_config')).expanduser().read_text())
+        for lidar in driver_config['lidar_configs']:
+            extrinsic = lidar['extrinsic_parameter']
+            if any(float(extrinsic[k]) != 0 for k in ('x', 'y', 'z', 'roll', 'pitch', 'yaw')):
+                raise ValueError('Go2 TF requires zero Livox driver extrinsic_parameter')
     output = Path(value('map_output_dir')).expanduser().resolve()
     output.mkdir(parents=True, exist_ok=True)
     map_path = output / ('mid360_map_' + datetime.now().strftime('%Y%m%d_%H%M%S_%f') + '.pcd')
@@ -81,7 +92,7 @@ def start(context):
             remappings=[('/livox/lidar', topics['lidar']),
                         ('/livox/imu', topics['imu'])]))
     nodes.append(Node(package='fast_lio', executable='fastlio_mapping', output='screen',
-        parameters=[str(config), common, {'world_frame':'odom', 'body_frame':'base_link',
+        parameters=[str(config), common, {'world_frame':'odom', 'body_frame':body_frame,
             'common.lid_topic':topics['lidar'], 'common.imu_topic':topics['imu'],
             'map_file_path':str(map_path)}],
         remappings=[('/Odometry',topics['odom']),
@@ -91,12 +102,17 @@ def start(context):
                     ('/Laser_map',topics['laser_map']),
                     ('/fast_lio/gravity',topics['gravity']),
                     ('/path',topics['path'])]))
-    nodes.extend([
-        Node(package='tf2_ros', executable='static_transform_publisher', name='base_imu_tf',
-             parameters=[common], arguments=['--frame-id','base_link','--child-frame-id','imu_link']),
-        Node(package='tf2_ros', executable='static_transform_publisher', name='base_lidar_tf',
-             parameters=[common], arguments=['--frame-id','base_link','--child-frame-id','lidar',
-             *sum(([flag,str(v)] for flag,v in zip(['--x','--y','--z','--qx','--qy','--qz','--qw'],[*translation,*quat])),[])])])
+    if go2:
+        transforms = [('imu_base_tf', 'imu_link', 'base_link', imu_base),
+                      ('base_lidar_tf', 'base_link', 'lidar', base_lidar)]
+    else:
+        imu_lidar = np.eye(4)
+        imu_lidar[:3, :3], imu_lidar[:3, 3] = rotation, translation
+        transforms = [('base_imu_tf', 'base_link', 'imu_link', np.eye(4)),
+                      ('base_lidar_tf', 'base_link', 'lidar', imu_lidar)]
+    for name, parent, child, transform in transforms:
+        nodes.append(Node(package='tf2_ros', executable='static_transform_publisher', name=name,
+                          parameters=[common], arguments=static_arguments(parent, child, transform)))
     if enabled('monitor'):
         nodes.append(Node(package='mid360_bringup', executable='livox_monitor', parameters=[common], output='screen',
             arguments=['--lidar-topic',topics['lidar'],'--imu-topic',topics['imu'],
@@ -128,7 +144,7 @@ def start(context):
         if not map_file.is_file() or not library.is_dir():
             raise FileNotFoundError(f'Keyframe map or library missing: {map_file}, {library}')
         keyframe_args = ['--library',str(library), '--map',str(map_file),
-                         '--sensor-config',str(config),
+                         '--sensor-config',str(config), '--odom-body-frame',body_frame,
                          '--cloud-topic',topics['local_cloud'], '--odom-topic',topics['odom'],
                          '--gravity-topic',topics['gravity'],
                          '--candidates-topic',topics['keyframe_candidates'],
@@ -156,6 +172,8 @@ def generate_launch_description():
         'monitor':('true','Start health monitor'), 'local_map':('true','Start sliding local map'),
         'config_file':(str(share/'config/mid360_robot.yaml'),'Absolute or current-directory-relative YAML path'),
         'driver_config':(str(share/'config/MID360_config.json'),'Lidar network JSON path'),
+        'robot_model':('imu','imu: legacy base_link at MID360 IMU; go2: Unitree body origin'),
+        'mount_config':(str(share/'config/go2_mount.yaml'),'Go2 base_link to raw lidar nominal mount'),
         'rviz_config':(str(share/'rviz/fastlio_map.rviz'),'RViz configuration'),
         'map_output_dir':(str(Path.home()/'Nav3_Sensor_ws/maps'),'Writable map output directory'),
         'window_time':('120.0','Long local map time window seconds'),
@@ -175,5 +193,6 @@ def generate_launch_description():
     boolean = {'driver','use_sim_time','rviz','monitor','local_map','adaptive_window',
                'keyframe_candidates'}
     return LaunchDescription([DeclareLaunchArgument(n,default_value=v,description=d,
-        **({'choices':['true','false']} if n in boolean else {})) for n,(v,d) in defaults.items()]
+        **({'choices':['true','false']} if n in boolean else
+           {'choices':['imu','go2']} if n == 'robot_model' else {})) for n,(v,d) in defaults.items()]
         + [OpaqueFunction(function=start)])

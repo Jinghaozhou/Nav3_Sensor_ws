@@ -37,7 +37,7 @@ class Retriever(Node):
         self.get_logger().warn('EXPERIMENTAL keyframes: provisional reference labels, all candidates, VGICP/two-window still required; no TF publication')
     def reset(self):self.clouds.clear();self.odom.clear();self.gravity.clear();self.last_query=None
     def odom_cb(self,m):
-        if (m.header.frame_id,m.child_frame_id)!=('odom','base_link'):return
+        if (m.header.frame_id,m.child_frame_id)!=('odom',self.a.odom_body_frame):return
         n=ns(m.header.stamp)
         try:self.odom[n]=message_pose(m.pose.pose)
         except ValueError:return
@@ -98,6 +98,7 @@ def main():
     p.add_argument('--library',type=Path,default=default_library())
     p.add_argument('--map',type=Path,required=True)
     p.add_argument('--sensor-config',type=Path)
+    p.add_argument('--odom-body-frame',default='base_link',choices=['base_link','imu_link'])
     p.add_argument('--output',type=Path)
     p.add_argument('--cloud-topic',default='/fast_lio/local_cloud')
     p.add_argument('--odom-topic',default='/fast_lio/odom')

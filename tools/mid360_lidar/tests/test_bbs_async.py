@@ -28,15 +28,15 @@ class AsyncTests(unittest.TestCase):
     def setUpClass(cls):rclpy.init()
     @classmethod
     def tearDownClass(cls):rclpy.shutdown()
-    def setup_node(self,delay):
-        self.db=SlowDatabase(delay);self.node=BbsRetriever(SimpleNamespace(output=None),self.db)
+    def setup_node(self,delay,body_frame='base_link'):
+        self.db=SlowDatabase(delay);self.node=BbsRetriever(SimpleNamespace(output=None,odom_body_frame=body_frame),self.db)
         self.node.timer.cancel();self.messages=[];self.node.pub=SimpleNamespace(publish=self.messages.append)
         self.points=np.random.default_rng(1).uniform([.6,-1,-1],[2,1,1],(1200,3)).astype('f4')
         now=self.node.get_clock().now().nanoseconds
         for i in range(10):self.feed(now-(9-i)*100000000)
     def feed(self,n):
         stamp=Time(sec=n//10**9,nanosec=n%10**9)
-        m=Odometry();m.header.frame_id='odom';m.header.stamp=stamp;m.child_frame_id='base_link';m.pose.pose.orientation.w=1.
+        m=Odometry();m.header.frame_id='odom';m.header.stamp=stamp;m.child_frame_id=self.node.a.odom_body_frame;m.pose.pose.orientation.w=1.
         self.node.odom_cb(m)
         g=Vector3Stamped();g.header=m.header;g.vector.z=-9.81;self.node.gravity_cb(g)
         self.node.cloud(build_cloud(stamp,'odom',self.points))
@@ -48,6 +48,14 @@ class AsyncTests(unittest.TestCase):
             rclpy.spin_once(self.node,timeout_sec=.005)
     def tearDown(self):
         self.node.close_search();self.node.destroy_node()
+    def test_go2_imu_frame_keeps_query_ready(self):
+        self.setup_node(.02,body_frame='imu_link');self.node.encode_query();self.pump(.15)
+        self.assertTrue(self.messages[-1].ready)
+        count=len(self.node.odom)
+        wrong=Odometry();wrong.header.frame_id='odom';wrong.child_frame_id='base_link'
+        wrong.header.stamp=self.node.get_clock().now().to_msg();wrong.pose.pose.orientation.w=1.
+        self.node.odom_cb(wrong)
+        self.assertEqual(len(self.node.odom),count)
     def test_slow_worker_does_not_block_reception(self):
         self.setup_node(1.2);self.node.encode_query();self.pump(1.4,feed=True)
         self.assertTrue(any(m.ready for m in self.messages))

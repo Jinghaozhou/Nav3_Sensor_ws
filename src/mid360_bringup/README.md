@@ -129,6 +129,8 @@ ros2 run mid360_bringup save_map
 
 ### TF 和 frame 定义
 
+独立建图默认 `robot_model:=imu`，保留历史定义：
+
 ```text
 odom
 └── base_link       FAST-LIO 发布动态 TF
@@ -143,7 +145,51 @@ odom
 - 点云、轨迹、里程计及 TF 使用同一组 `odom/base_link` 参数。
 - 本包不发布 `map→odom`。该变换留给全局定位模块。
 
-如机器人底盘原点与 IMU 不重合，需根据安装外参换算底盘位姿和 TF，不能仅将 IMU 位姿改名为底盘位姿。
+Go2 使用 `robot_model:=go2`，主仓库 `nav3_bringup` 默认选择此模式：
+
+```text
+map → odom           全局定位发布（本包不发布）
+      └── imu_link   FAST-LIO 动态位姿；MID360 内部 IMU 原点
+          └── base_link  本包静态发布；Unitree Go2 的 base 原点
+              └── lidar  本包静态发布；原始 /lidar_points 的 frame_id
+```
+
+`config/go2_mount.yaml` 保存名义安装参数：`T_base_lidar` 平移为
+`[0.207993, 0.0, 0.152959]` m，RPY 为 `[0, 0.34906585, 0]` rad，
+坐标轴 x 向前、y 向左、z 向上。参考 [Unitree 官方 Go2 URDF](https://github.com/unitreerobotics/unitree_ros/blob/master/robots/go2_description/urdf/go2_description.urdf)
+的 `base` link 原点，不能用 inertial 中的质心偏移代替它。
+本地仿真模型的 `base → trunk` 也是恒等关系，但不在实机启动中发布整套仿真 URDF。
+文档提供的安装值对应雷达点云原点，属于未经实物标定的安装初值。
+
+FAST-LIO 的 `mapping.extrinsic_T/R` 定义 `T_imu_lidar`，保留
+`[-0.011, -0.02329, 0.04412]` m 和单位旋转；**不要改成 Go2 的安装参数**。
+本包计算 `T_imu_base = T_imu_lidar × inverse(T_base_lidar)`，因此
+`T_odom_imu × T_imu_base × T_base_lidar = T_odom_imu × T_imu_lidar`，
+世界点云不会重复施加安装变换。Go2 模式检查 Livox JSON 中的 `extrinsic_parameter`
+全部为零；非零则拒绝启动，避免 SDK 预变换原始点。
+
+Go2 模式下 `/fast_lio/odom.child_frame_id` 和 `/fast_lio/body_cloud.header.frame_id`
+改为 `imu_link`；上表描述的是独立建图默认值。里程计数值、路径及世界点云仍描述
+FAST-LIO 的 IMU 状态。下游必须通过 TF 使用机体位姿，不能只把里程计帧名改成 `base_link`。
+SCAN 已按 odometry child 到 robot_frame 的变换计算机体位置与速度，
+`robot_frame` 和 `control_frame` 使用 `base_link`。BBS 和关键帧检索器仍以原 IMU
+状态生成历史库兼容的查询；启动时传 `--odom-body-frame imu_link`，联合启动已自动传递。
+历史固定候选中基于旧 IMU 原点的物理位置假设仍需现场复核；默认 BBS 输出 `map → odom` 候选。
+
+回放旧 bag 验证新外参时，只播放原始点云和 IMU，不能混入旧 `/tf`、`/tf_static`
+或旧 `/fast_lio/odom`。例：
+
+```bash
+ROS_DOMAIN_ID=89 ros2 launch mid360_bringup mid360_mapping.launch.py \
+  robot_model:=go2 driver:=false use_sim_time:=true rviz:=false
+# 另一终端同样 source 环境后执行：
+ROS_DOMAIN_ID=89 ros2 bag play /绝对路径/bag --clock --topics /lidar_points /imu
+```
+
+物理变换与启动结构检查：
+`python3 -m unittest discover -s src/mid360_bringup/test -v`（在本子模块根目录）。
+主仓库提供 `scripts/validate_go2_mount.py`，自动隔离回放、比较两种模式下的 IMU
+轨迹、检查点云一致性与 TF 复合关系，使用方法见主仓库 scripts README。
 
 ## 5. 配置文件与启动参数
 
@@ -164,6 +210,8 @@ ros2 launch mid360_bringup mid360_mapping.launch.py --show-args
 | `rviz` / `monitor` / `local_map` | true | 分别控制可视化、监控、局部地图 |
 | `config_file` | 包内 mid360_robot.yaml | 建图参数和话题接口配置路径 |
 | `driver_config` | 包内 MID360_config.json | 网络配置路径 |
+| `robot_model` | imu | `imu` 保留历史定义；`go2` 接入机体原点与安装外参 |
+| `mount_config` | 包内 go2_mount.yaml | Go2 到原始雷达点云的名义安装参数 |
 | `rviz_config` | 包内 fastlio_map.rviz | RViz 配置路径 |
 | `map_output_dir` | ~/Nav3_Sensor_ws/maps | 可写地图输出目录 |
 | `window_time` | 120.0 | 长窗口时间，秒 |
